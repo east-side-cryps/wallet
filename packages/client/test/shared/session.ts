@@ -24,7 +24,7 @@ export async function testApproveSession(
     new Promise<void>(async (resolve, reject) => {
       time.start("connect");
       await clients.a.connect({
-        metadata: setup.a.metadata,
+        metadata: setup.a.options.metadata,
         permissions: setup.a.permissions,
         pairing,
       });
@@ -46,10 +46,7 @@ export async function testApproveSession(
     new Promise<void>(async (resolve, reject) => {
       clients.b.on(CLIENT_EVENTS.session.proposal, async (proposal: SessionTypes.Proposal) => {
         clients.b.logger.warn(`TEST >> Session Proposal`);
-        const response: SessionTypes.Response = {
-          state: setup.b.state,
-          metadata: setup.b.metadata,
-        };
+        const response = { state: setup.b.state };
         await clients.b.approve({ proposal, response });
         clients.b.logger.warn(`TEST >> Session Responded`);
         resolve();
@@ -118,16 +115,14 @@ export async function testApproveSession(
   expect(sessionA?.relay.protocol).to.eql(sessionB?.relay.protocol);
   expect(sessionA?.peer.publicKey).to.eql(sessionB?.self.publicKey);
   expect(sessionA?.self.publicKey).to.eql(sessionB?.peer.publicKey);
-  expect(sessionA?.peer.metadata).to.eql(setup.b.metadata);
-  expect(sessionB?.peer.metadata).to.eql(setup.a.metadata);
+  expect(sessionA?.peer.metadata).to.eql(setup.b.options.metadata);
+  expect(sessionB?.peer.metadata).to.eql(setup.a.options.metadata);
   // blockchain state
   expect(sessionA?.state.accounts).to.eql(setup.b.state.accounts);
   expect(sessionA?.state.accounts).to.eql(sessionB?.state.accounts);
   // blockchain permissions
-  expect(sessionA?.permissions.state.controller.publicKey).to.eql(sessionB?.self.publicKey);
-  expect(sessionB?.permissions.state.controller.publicKey).to.eql(sessionB?.self.publicKey);
-  expect(sessionA?.permissions.notifications.controller.publicKey).to.eql(sessionB?.self.publicKey);
-  expect(sessionB?.permissions.notifications.controller.publicKey).to.eql(sessionB?.self.publicKey);
+  expect(sessionA?.permissions.controller.publicKey).to.eql(sessionB?.self.publicKey);
+  expect(sessionB?.permissions.controller.publicKey).to.eql(sessionB?.self.publicKey);
   expect(sessionA?.permissions.blockchain.chains).to.eql(setup.b.permissions.blockchain.chains);
   expect(sessionA?.permissions.blockchain.chains).to.eql(sessionB?.permissions.blockchain.chains);
   // jsonrpc permmissions
@@ -145,7 +140,6 @@ export async function testRejectSession(
   await Promise.all([
     new Promise<void>(async (resolve, reject) => {
       const promise = clients.a.connect({
-        metadata: setup.a.metadata,
         permissions: setup.a.permissions,
         pairing,
       });

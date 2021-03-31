@@ -2,7 +2,7 @@ import "mocha";
 import sinon from "sinon";
 import { KeyValueStorage } from "keyvaluestorage";
 import { SessionTypes } from "@walletconnect/types";
-import { generateRandomBytes32 } from "@walletconnect/utils";
+import { ERROR, generateRandomBytes32, getError } from "@walletconnect/utils";
 
 import {
   expect,
@@ -12,11 +12,14 @@ import {
   testPairingWithoutSession,
   TEST_ETHEREUM_ACCOUNTS,
   TEST_CLIENT_DATABASE,
+  TEST_TIMEOUT_DURATION,
+  testJsonRpcRequest,
 } from "./shared";
 import { CLIENT_EVENTS } from "../src";
+import { formatJsonRpcResult } from "@json-rpc-tools/utils";
 
 describe("Session", function() {
-  this.timeout(30_000);
+  this.timeout(TEST_TIMEOUT_DURATION);
   let clock: sinon.SinonFakeTimers;
   beforeEach(function() {
     clock = sinon.useFakeTimers();
@@ -57,7 +60,6 @@ describe("Session", function() {
     const { setup, clients } = await setupClientsForTesting();
     const pairing = { topic: generateRandomBytes32() };
     const promise = clients.a.connect({
-      metadata: setup.a.metadata,
       permissions: setup.a.permissions,
       pairing,
     });
@@ -70,7 +72,6 @@ describe("Session", function() {
     const pairing = { topic: await testPairingWithoutSession(clients) };
     const permissions = { blockchain: setup.a.permissions.blockchain };
     const promise = clients.a.connect({
-      metadata: setup.a.metadata,
       permissions: permissions as any,
       pairing,
     });
@@ -91,7 +92,6 @@ describe("Session", function() {
     const { setup, clients } = await setupClientsForTesting();
     const pairing = { topic: await testPairingWithoutSession(clients) };
     const response = {
-      metadata: setup.b.metadata,
       state: {
         accounts: TEST_ETHEREUM_ACCOUNTS,
       },
@@ -99,7 +99,6 @@ describe("Session", function() {
     await Promise.all([
       new Promise<void>(async (resolve, reject) => {
         clients.a.connect({
-          metadata: setup.a.metadata,
           permissions: setup.a.permissions,
           pairing,
         });
@@ -125,7 +124,6 @@ describe("Session", function() {
     await Promise.all([
       new Promise<void>(async (resolve, reject) => {
         clients.a.connect({
-          metadata: setup.a.metadata,
           permissions: setup.a.permissions,
           pairing,
         });
@@ -145,13 +143,13 @@ describe("Session", function() {
     const { setup, clients } = await setupClientsForTesting();
     await testApproveSession(setup, clients);
     const topic = clients.a.session.topics[0];
-    await clients.a.session.ping(topic);
+    await clients.a.session.ping(topic, TEST_TIMEOUT_DURATION);
   });
   it("B pings A with existing session", async () => {
     const { setup, clients } = await setupClientsForTesting();
     await testApproveSession(setup, clients);
     const topic = clients.b.session.topics[0];
-    await clients.b.session.ping(topic);
+    await clients.b.session.ping(topic, TEST_TIMEOUT_DURATION);
   });
   it("B updates state accounts and A receives event", async () => {
     const state = { accounts: ["0x8fd00f170fdf3772c5ebdcd90bf257316c69ba45@eip155:1"] };
@@ -166,7 +164,7 @@ describe("Session", function() {
         });
       }),
       new Promise<void>(async (resolve, reject) => {
-        await clients.b.update({ topic, update: { state } });
+        await clients.b.update({ topic, state });
         resolve();
       }),
     ]);
@@ -175,7 +173,7 @@ describe("Session", function() {
     const state = { accounts: ["0x8fd00f170fdf3772c5ebdcd90bf257316c69ba45@eip155:1"] };
     const { setup, clients } = await setupClientsForTesting();
     const topic = await testApproveSession(setup, clients);
-    const promise = clients.a.update({ topic, update: { state } });
+    const promise = clients.a.update({ topic, state });
     await expect(promise).to.eventually.be.rejectedWith(`Unauthorized session update request`);
   });
   it("B emits notification and A receives event", async () => {
@@ -209,14 +207,60 @@ describe("Session", function() {
       `Unauthorized Notification Type Requested: ${event.type}`,
     );
   });
+  it("B upgrades permissions and A receives event", async () => {
+    const chainId = "eip155:100";
+    const request = {
+      method: "personal_sign",
+      params: ["0xdeadbeaf", "0x9b2055d370f73ec7d8a03e965129118dc8f5bf83"],
+    };
+    const { setup, clients } = await setupClientsForTesting();
+    const topic = await testApproveSession(setup, clients);
+    // first - attempt sending request to chainId=eip155:100
+    const promise = clients.a.request({ topic, request, chainId, timeout: TEST_TIMEOUT_DURATION });
+    await expect(promise).to.eventually.be.rejectedWith(
+      `Unauthorized Target ChainId Requested: ${chainId}`,
+    );
+    // second - upgrade permissions to include new chainId
+    await Promise.all([
+      new Promise<void>(async (resolve, reject) => {
+        clients.a.on(CLIENT_EVENTS.session.updated, (session: SessionTypes.Settled) => {
+          if (!session.permissions.blockchain.chains.includes(chainId)) {
+            return reject(new Error(`Updated session permissions missing new chainId: ${chainId}`));
+          }
+          resolve();
+        });
+      }),
+      new Promise<void>(async (resolve, reject) => {
+        try {
+          await clients.b.upgrade({ topic, permissions: { blockchain: { chains: [chainId] } } });
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      }),
+    ]);
+    // third - send request again with new chainId and respond
+    await testJsonRpcRequest(setup, clients, topic, request, formatJsonRpcResult(1, "0xdeadbeaf"));
+  });
+  it("A upgrades permissions and error is thrown", async () => {
+    const chainId = "eip155:100";
+    const { setup, clients } = await setupClientsForTesting();
+    const topic = await testApproveSession(setup, clients);
+    const promise = clients.a.upgrade({
+      topic,
+      permissions: { blockchain: { chains: [chainId] } },
+    });
+    await expect(promise).to.eventually.be.rejectedWith(`Unauthorized session upgrade request`);
+  });
   it("A fails to pings B after A deletes session", async () => {
     const { setup, clients } = await setupClientsForTesting();
     const topic = await testApproveSession(setup, clients);
-    await clients.a.disconnect({ topic, reason: "Ending session early" });
+    const reason = getError(ERROR.USER_DISCONNECTED);
+    await clients.a.disconnect({ topic, reason });
     await expect(clients.a.session.get(topic)).to.eventually.be.rejectedWith(
       `No matching session settled with topic: ${topic}`,
     );
-    const promise = clients.a.session.ping(topic);
+    const promise = clients.a.session.ping(topic, TEST_TIMEOUT_DURATION);
     await expect(promise).to.eventually.be.rejectedWith(
       `No matching session settled with topic: ${topic}`,
     );
@@ -224,14 +268,15 @@ describe("Session", function() {
   it("A fails to pings B after B deletes session", async () => {
     const { setup, clients } = await setupClientsForTesting();
     const topic = await testApproveSession(setup, clients);
-    await clients.b.disconnect({ topic, reason: "Ending session early" });
+    const reason = getError(ERROR.USER_DISCONNECTED);
+    await clients.b.disconnect({ topic, reason });
     await expect(clients.b.session.get(topic)).to.eventually.be.rejectedWith(
       `No matching session settled with topic: ${topic}`,
     );
-    const promise = clients.a.session.ping(topic);
-    clock.tick(30_000);
+    const promise = clients.a.session.ping(topic, TEST_TIMEOUT_DURATION);
+    clock.tick(TEST_TIMEOUT_DURATION);
     await expect(promise).to.eventually.be.rejectedWith(
-      `JSON-RPC Request timeout after 30s: wc_sessionPing`,
+      `JSON-RPC Request timeout after ${TEST_TIMEOUT_DURATION / 1000} seconds: wc_sessionPing`,
     );
   });
   it("clients ping each other after restart", async () => {
@@ -241,14 +286,14 @@ describe("Session", function() {
     // connect
     const topic = await testApproveSession(before.setup, before.clients);
     // ping
-    await before.clients.a.session.ping(topic);
-    await before.clients.b.session.ping(topic);
+    await before.clients.a.session.ping(topic, TEST_TIMEOUT_DURATION);
+    await before.clients.b.session.ping(topic, TEST_TIMEOUT_DURATION);
     // delete
     delete before.clients;
     // restart
     const after = await setupClientsForTesting({ shared: { options: { storage } } });
     // ping
-    await after.clients.a.session.ping(topic);
-    await after.clients.b.session.ping(topic);
+    await after.clients.a.session.ping(topic, TEST_TIMEOUT_DURATION);
+    await after.clients.b.session.ping(topic, TEST_TIMEOUT_DURATION);
   });
 });

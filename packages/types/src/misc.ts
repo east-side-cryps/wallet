@@ -1,4 +1,5 @@
-import { CryptoTypes } from "./crypto";
+import { ErrorResponse } from "@json-rpc-tools/types";
+
 import { RelayerTypes } from "./relayer";
 
 export declare namespace SignalTypes {
@@ -38,15 +39,8 @@ export interface JsonRpcPermissions {
   methods: string[];
 }
 
-export declare namespace NotificationPermissions {
-  export interface Proposal {
-    types: string[];
-  }
-
-  export interface Settled {
-    types: string[];
-    controller: CryptoTypes.Participant;
-  }
+export interface NotificationPermissions {
+  types: string[];
 }
 
 export declare namespace BlockchainTypes {
@@ -64,6 +58,21 @@ export interface UriParameters {
   topic: string;
   publicKey: string;
   relay: RelayerTypes.ProtocolOptions;
+  controller: boolean;
+}
+
+export interface AppMetadata {
+  name: string;
+  description: string;
+  url: string;
+  icons: string[];
+}
+
+export interface RelayClientMetadata {
+  protocol: string;
+  version: number;
+  env: string;
+  host?: string;
 }
 
 export declare namespace Validation {
@@ -73,8 +82,10 @@ export declare namespace Validation {
 
   export interface Invalid {
     valid: false;
-    error: string;
+    error: ErrorResponse;
   }
 
   export type Result = Valid | Invalid;
 }
+
+export type Reason = ErrorResponse;

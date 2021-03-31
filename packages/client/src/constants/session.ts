@@ -7,6 +7,7 @@ export const SESSION_JSONRPC = {
   approve: "wc_sessionApprove",
   reject: "wc_sessionReject",
   update: "wc_sessionUpdate",
+  upgrade: "wc_sessionUpgrade",
   delete: "wc_sessionDelete",
   payload: "wc_sessionPayload",
   ping: "wc_sessionPing",
@@ -27,20 +28,14 @@ export const SESSION_STATUS = {
 };
 
 export const SESSION_EVENTS = {
-  payload: "session_payload",
   proposed: "session_proposed",
   responded: "session_responded",
   settled: "session_settled",
   updated: "session_updated",
   deleted: "session_deleted",
   notification: "session_notification",
-};
-
-export const SESSION_REASONS = {
-  settled: "Session settled",
-  not_approved: "Session not approved",
-  responded: "Session proposal responded",
-  acknowledged: "Session response acknowledged",
+  request: "session_request",
+  response: "session_response",
 };
 
 export const SESSION_EMPTY_PERMISSIONS = {
@@ -55,14 +50,18 @@ export const SESSION_EMPTY_PERMISSIONS = {
   },
 } as SessionTypes.ProposedPermissions;
 
+export const SESSION_EMPTY_STATE = {
+  accounts: [],
+};
+
+export const SESSION_EMPTY_METADATA = {
+  name: "",
+  description: "",
+  url: "",
+  icons: [],
+};
+
 export const SESSION_EMPTY_RESPONSE = {
-  metadata: {
-    name: "",
-    description: "",
-    url: "",
-    icons: [],
-  },
-  state: {
-    accounts: [],
-  },
+  metadata: SESSION_EMPTY_METADATA,
+  state: SESSION_EMPTY_STATE,
 } as SessionTypes.Response;

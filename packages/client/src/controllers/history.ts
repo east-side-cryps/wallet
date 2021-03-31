@@ -1,6 +1,7 @@
 import { EventEmitter } from "events";
 import { Logger } from "pino";
 import { IClient, IJsonRpcHistory, JsonRpcRecord } from "@walletconnect/types";
+import { ERROR, getError } from "@walletconnect/utils";
 import { isJsonRpcError, JsonRpcRequest, JsonRpcResponse } from "@json-rpc-tools/utils";
 import { generateChildLogger, getLoggerContext } from "@pedrouid/pino-utils";
 
@@ -44,11 +45,12 @@ export class JsonRpcHistory extends IJsonRpcHistory {
     this.logger.debug(`Setting JSON-RPC request history record`);
     this.logger.trace({ type: "method", method: "set", topic, request, chainId });
     if (this.records.has(request.id)) {
-      const errorMessage = `Record already exists for ${this.getHistoryContext()} matching id: ${
-        request.id
-      }`;
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      const error = getError(ERROR.RECORD_ALREADY_EXISTS, {
+        context: this.getHistoryContext(),
+        id: request.id,
+      });
+      this.logger.error(error.message);
+      throw new Error(error.message);
     }
     const record: JsonRpcRecord = {
       id: request.id,
@@ -81,9 +83,12 @@ export class JsonRpcHistory extends IJsonRpcHistory {
     this.logger.trace({ type: "method", method: "get", topic, id });
     const record = await this.getRecord(id);
     if (record.topic !== topic) {
-      const errorMessage = `Mismatched topic for ${this.getHistoryContext()} with id: ${id}`;
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      const error = getError(ERROR.MISMATCHED_TOPIC, {
+        context: this.getHistoryContext(),
+        id,
+      });
+      this.logger.error(error.message);
+      throw new Error(error.message);
     }
     return record;
   }
@@ -145,9 +150,12 @@ export class JsonRpcHistory extends IJsonRpcHistory {
     await this.isEnabled();
     const record = this.records.get(id);
     if (!record) {
-      const errorMessage = `No matching ${this.getHistoryContext()} with id: ${id}`;
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      const error = getError(ERROR.NO_MATCHING_ID, {
+        context: this.getHistoryContext(),
+        id,
+      });
+      this.logger.error(error.message);
+      throw new Error(error.message);
     }
     return record;
   }
@@ -162,9 +170,11 @@ export class JsonRpcHistory extends IJsonRpcHistory {
       if (typeof persisted === "undefined") return;
       if (!persisted.length) return;
       if (this.records.size) {
-        const errorMessage = `Restore will override already set ${this.getHistoryContext()}`;
-        this.logger.error(errorMessage);
-        throw new Error(errorMessage);
+        const error = getError(ERROR.RESTORE_WILL_OVERRIDE, {
+          context: this.getHistoryContext(),
+        });
+        this.logger.error(error.message);
+        throw new Error(error.message);
       }
       this.cached = persisted;
       await Promise.all(

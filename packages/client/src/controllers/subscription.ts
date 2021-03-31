@@ -3,10 +3,12 @@ import { Logger } from "pino";
 import {
   IClient,
   ISubscription,
+  Reason,
   SubscriptionEvent,
   SubscriptionOptions,
   SubscriptionParams,
 } from "@walletconnect/types";
+import { ERROR, getError } from "@walletconnect/utils";
 import { JsonRpcPayload } from "@json-rpc-tools/utils";
 
 import { SUBSCRIPTION_DEFAULT_TTL, SUBSCRIPTION_EVENTS } from "../constants";
@@ -58,9 +60,11 @@ export class Subscription<Data = any> extends ISubscription<Data> {
       this.logger.debug(`Setting subscription`);
       this.logger.trace({ type: "method", method: "set", topic, data, opts });
       if (this.encrypted && typeof opts.decryptKeys === "undefined") {
-        const errorMessage = `Decrypt params required for ${this.getSubscriptionContext()}`;
-        this.logger.error(errorMessage);
-        throw new Error(errorMessage);
+        const error = getError(ERROR.MISSING_DECRYPT_PARAMS, {
+          context: this.getSubscriptionContext(),
+        });
+        this.logger.error(error.message);
+        throw new Error(error.message);
       }
       await this.subscribeAndSet(topic, data, opts);
       this.events.emit(SUBSCRIPTION_EVENTS.created, {
@@ -96,7 +100,7 @@ export class Subscription<Data = any> extends ISubscription<Data> {
     } as SubscriptionEvent.Updated<Data>);
   }
 
-  public async delete(topic: string, reason: string): Promise<void> {
+  public async delete(topic: string, reason: Reason): Promise<void> {
     await this.isEnabled();
 
     this.logger.debug(`Deleting subscription`);
@@ -157,9 +161,12 @@ export class Subscription<Data = any> extends ISubscription<Data> {
     await this.isEnabled();
     const subscription = this.subscriptions.get(topic);
     if (!subscription) {
-      const errorMessage = `No matching ${this.getSubscriptionContext()} with topic: ${topic}`;
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      const error = getError(ERROR.NO_MATCHING_TOPIC, {
+        context: this.getSubscriptionContext(),
+        topic,
+      });
+      this.logger.error(error.message);
+      throw new Error(error.message);
     }
     return subscription;
   }
@@ -190,21 +197,21 @@ export class Subscription<Data = any> extends ISubscription<Data> {
     this.timeout.set(topic, timeout);
   }
 
-  public deleteTimeout(topic: string): void {
+  private deleteTimeout(topic: string): void {
     if (!this.timeout.has(topic)) return;
     const timeout = this.timeout.get(topic);
     if (typeof timeout === "undefined") return;
     clearTimeout(timeout);
   }
 
-  public resetTimeout(): void {
+  private resetTimeout(): void {
     this.timeout.forEach(timeout => clearTimeout(timeout));
     this.timeout.clear();
   }
 
   private onTimeout(topic: string): void {
     this.deleteTimeout(topic);
-    this.delete(topic, "Expired");
+    this.delete(topic, getError(ERROR.EXPIRED, { context: this.getSubscriptionContext() }));
   }
 
   private async persist() {
@@ -222,9 +229,11 @@ export class Subscription<Data = any> extends ISubscription<Data> {
       if (typeof persisted === "undefined") return;
       if (!persisted.length) return;
       if (this.subscriptions.size) {
-        const errorMessage = `Restore will override already set ${this.getSubscriptionContext()}`;
-        this.logger.error(errorMessage);
-        throw new Error(errorMessage);
+        const error = getError(ERROR.RESTORE_WILL_OVERRIDE, {
+          context: this.getSubscriptionContext(),
+        });
+        this.logger.error(error.message);
+        throw new Error(error.message);
       }
       this.cached = persisted;
       await Promise.all(

@@ -1,48 +1,62 @@
-import { JsonRpcPayload, RequestArguments } from "@json-rpc-tools/types";
+import {
+  JsonRpcPayload,
+  JsonRpcRequest,
+  JsonRpcResponse,
+  RequestArguments,
+} from "@json-rpc-tools/types";
 
 import { ISequence } from "./sequence";
 import { CryptoTypes } from "./crypto";
 import { RelayerTypes } from "./relayer";
-import { SignalTypes, BlockchainTypes, JsonRpcPermissions, NotificationPermissions } from "./misc";
+import {
+  SignalTypes,
+  BlockchainTypes,
+  JsonRpcPermissions,
+  NotificationPermissions,
+  AppMetadata,
+  Reason,
+} from "./misc";
 import { SubscriptionEvent } from "./subscription";
 
 export declare namespace SessionTypes {
   export interface BasePermissions {
     jsonrpc: JsonRpcPermissions;
     blockchain: BlockchainTypes.Permissions;
+    notifications?: NotificationPermissions;
+  }
+  export interface ProposedPermissions extends BasePermissions {
+    notifications: NotificationPermissions;
   }
 
-  export interface StatePermissions {
+  export interface SettledPermissions extends ProposedPermissions {
     controller: CryptoTypes.Participant;
   }
 
-  export interface ProposedPermissions extends BasePermissions {
-    notifications: NotificationPermissions.Proposal;
-  }
-
-  export interface SettledPermissions extends BasePermissions {
-    notifications: NotificationPermissions.Settled;
-    state: StatePermissions;
-  }
+  export type Permissions = SettledPermissions;
 
   export interface ProposeParams {
     signal: Signal;
     relay: RelayerTypes.ProtocolOptions;
-    metadata: Metadata;
+    metadata: AppMetadata;
     permissions: ProposedPermissions;
     ttl?: number;
+    timeout?: number;
   }
 
   export type CreateParams = ProposeParams;
 
   export type Signal = SignalTypes.Pairing;
 
-  export type Peer = Required<CryptoTypes.Peer<Metadata>>;
+  export type Peer = Required<CryptoTypes.Peer<AppMetadata>>;
+
+  export interface ProposedPeer extends Peer {
+    controller: boolean;
+  }
 
   export interface Proposal {
     topic: string;
     relay: RelayerTypes.ProtocolOptions;
-    proposer: Peer;
+    proposer: ProposedPeer;
     signal: Signal;
     permissions: ProposedPermissions;
     ttl: number;
@@ -77,6 +91,7 @@ export declare namespace SessionTypes {
     approved: boolean;
     proposal: Proposal;
     response: Response;
+    reason?: Reason;
   }
 
   export interface SettleParams {
@@ -89,20 +104,28 @@ export declare namespace SessionTypes {
     expiry: number;
   }
 
-  export interface UpdateParams {
+  export interface UpgradeParams extends Upgrade {
     topic: string;
-    update: Update;
+  }
+
+  export interface UpdateParams extends Update {
+    topic: string;
   }
 
   export interface RequestParams {
     topic: string;
     request: RequestArguments;
     chainId?: string;
+    timeout?: number;
   }
 
-  export type StateUpdate = { state: Partial<BlockchainTypes.State> };
+  export interface Upgrade {
+    permissions: Partial<BasePermissions>;
+  }
 
-  export type Update = StateUpdate;
+  export interface Update {
+    state: Partial<State>;
+  }
 
   export interface Payload {
     request: RequestArguments;
@@ -113,6 +136,14 @@ export declare namespace SessionTypes {
     topic: string;
     payload: JsonRpcPayload;
     chainId?: string;
+  }
+
+  export interface RequestEvent extends Omit<PayloadEvent, "payload"> {
+    request: JsonRpcRequest;
+  }
+
+  export interface ResponseEvent extends Omit<PayloadEvent, "payload"> {
+    response: JsonRpcResponse;
   }
 
   export interface Notification {
@@ -127,7 +158,7 @@ export declare namespace SessionTypes {
   export type NotifyParams = NotificationEvent;
   export interface DeleteParams {
     topic: string;
-    reason: string;
+    reason: Reason;
   }
 
   export interface Settled {
@@ -143,13 +174,6 @@ export declare namespace SessionTypes {
 
   export type Created = Settled;
 
-  export interface Metadata {
-    name: string;
-    description: string;
-    url: string;
-    icons: string[];
-  }
-
   export interface Success {
     topic: string;
     relay: RelayerTypes.ProtocolOptions;
@@ -158,7 +182,7 @@ export declare namespace SessionTypes {
     state: State;
   }
   export interface Failed {
-    reason: string;
+    reason: Reason;
   }
 
   export type Outcome = Failed | Success;
@@ -167,18 +191,20 @@ export declare namespace SessionTypes {
 
   export interface Response {
     state: State;
-    metadata: Metadata;
+    metadata: AppMetadata;
   }
 }
 
 export abstract class ISession extends ISequence<
   SessionTypes.Pending,
   SessionTypes.Settled,
+  SessionTypes.Upgrade,
   SessionTypes.Update,
   SessionTypes.CreateParams,
   SessionTypes.RespondParams,
-  SessionTypes.UpdateParams,
   SessionTypes.RequestParams,
+  SessionTypes.UpgradeParams,
+  SessionTypes.UpdateParams,
   SessionTypes.DeleteParams,
   SessionTypes.ProposeParams,
   SessionTypes.SettleParams

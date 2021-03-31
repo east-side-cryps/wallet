@@ -7,6 +7,7 @@ import {
   ClientTypes,
   PairingTypes,
   SessionTypes,
+  AppMetadata,
 } from "@walletconnect/types";
 import {
   isPairingFailed,
@@ -14,9 +15,11 @@ import {
   parseUri,
   isPairingResponded,
   isSessionResponded,
-  getPairingMetadata,
+  getAppMetadata,
+  ERROR,
+  getError,
 } from "@walletconnect/utils";
-import { JsonRpcPayload, isJsonRpcRequest } from "@json-rpc-tools/utils";
+import { JsonRpcRequest } from "@json-rpc-tools/utils";
 import { generateChildLogger, getDefaultLoggerOptions } from "@pedrouid/pino-utils";
 
 import { Pairing, Session, Relayer } from "./controllers";
@@ -30,6 +33,7 @@ import {
   RELAYER_DEFAULT_PROTOCOL,
   SESSION_EMPTY_PERMISSIONS,
   SESSION_EMPTY_RESPONSE,
+  SESSION_EMPTY_STATE,
   SESSION_EVENTS,
   SESSION_JSONRPC,
   SESSION_SIGNAL_METHOD_PAIRING,
@@ -50,6 +54,9 @@ export class Client extends IClient {
 
   public context: string = CLIENT_CONTEXT;
 
+  public readonly controller: boolean;
+  public metadata: AppMetadata | undefined;
+
   static async init(opts?: ClientOptions): Promise<Client> {
     const client = new Client(opts);
     await client.initialize();
@@ -62,7 +69,11 @@ export class Client extends IClient {
       typeof opts?.logger !== "undefined" && typeof opts?.logger !== "string"
         ? opts.logger
         : pino(getDefaultLoggerOptions({ level: opts?.logger }));
-    this.context = opts?.overrideContext || this.context;
+
+    this.context = opts?.name || this.context;
+    this.controller = opts?.controller || false;
+    this.metadata = opts?.metadata || getAppMetadata();
+
     this.logger = generateChildLogger(logger, this.context);
 
     this.relayer = new Relayer(this, this.logger, opts?.relayProvider);
@@ -101,10 +112,16 @@ export class Client extends IClient {
           ? await this.pairing.create()
           : await this.pairing.get(params.pairing.topic);
       this.logger.trace({ type: "method", method: "connect", pairing });
+      const metadata = params.metadata || this.metadata;
+      if (typeof metadata === "undefined") {
+        const error = getError(ERROR.MISSING_OR_INVALID, { name: "app metadata" });
+        this.logger.error(error.message);
+        throw new Error(error.message);
+      }
       const session = await this.session.create({
         signal: { method: SESSION_SIGNAL_METHOD_PAIRING, params: { topic: pairing.topic } },
         relay: params.relay || { protocol: RELAYER_DEFAULT_PROTOCOL },
-        metadata: params.metadata,
+        metadata,
         permissions: {
           ...params.permissions,
           notifications: SESSION_EMPTY_PERMISSIONS.notifications,
@@ -120,43 +137,64 @@ export class Client extends IClient {
     }
   }
 
-  public async pair(params: ClientTypes.PairParams): Promise<void> {
+  public async pair(params: ClientTypes.PairParams): Promise<string> {
     this.logger.debug(`Pairing`);
     this.logger.trace({ type: "method", method: "pair", params });
     const proposal = formatPairingProposal(params.uri);
-    const pending = await this.pairing.respond({ approved: true, proposal });
-    if (!isPairingResponded(pending)) return;
+    const approved = proposal.proposer.controller !== this.controller;
+    const reason = approved
+      ? undefined
+      : getError(ERROR.UNAUTHORIZED_MATCHING_CONTROLLER, { controller: this.controller });
+    const pending = await this.pairing.respond({ approved, proposal, reason });
+    if (!isPairingResponded(pending)) {
+      const error = getError(ERROR.NO_MATCHING_RESPONSE, { context: "pairing" });
+      this.logger.error(error.message);
+      throw new Error(error.message);
+    }
     if (isPairingFailed(pending.outcome)) {
       this.logger.debug(`Pairing Failure`);
       this.logger.trace({ type: "method", method: "pair", outcome: pending.outcome });
-      return;
+      throw new Error(pending.outcome.reason.message);
     }
     this.logger.debug(`Pairing Success`);
     this.logger.trace({ type: "method", method: "pair", pending });
+    return pending.outcome.topic;
   }
 
   public async approve(params: ClientTypes.ApproveParams): Promise<SessionTypes.Settled> {
     this.logger.debug(`Approving Session Proposal`);
     this.logger.trace({ type: "method", method: "approve", params });
     if (typeof params.response === "undefined") {
-      const errorMessage = "Response is required for approved session proposals";
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      const error = getError(ERROR.MISSING_RESPONSE, { context: "session" });
+      this.logger.error(error.message);
+      throw new Error(error.message);
     }
+    const state = params.response.state || SESSION_EMPTY_STATE;
+    const metadata = params.response.metadata || this.metadata;
+    if (typeof metadata === "undefined") {
+      const error = getError(ERROR.MISSING_OR_INVALID, { name: "app metadata" });
+      this.logger.error(error.message);
+      throw new Error(error.message);
+    }
+    const approved = params.proposal.proposer.controller !== this.controller;
+    const reason = approved
+      ? undefined
+      : getError(ERROR.UNAUTHORIZED_MATCHING_CONTROLLER, { controller: this.controller });
     const pending = await this.session.respond({
-      approved: true,
+      approved,
       proposal: params.proposal,
-      response: params.response || SESSION_EMPTY_RESPONSE,
+      response: { state, metadata },
+      reason,
     });
     if (!isSessionResponded(pending)) {
-      const errorMessage = "No Session Response found in pending proposal";
-      this.logger.error(errorMessage);
-      throw new Error(errorMessage);
+      const error = getError(ERROR.NO_MATCHING_RESPONSE, { context: "session" });
+      this.logger.error(error.message);
+      throw new Error(error.message);
     }
     if (isSessionFailed(pending.outcome)) {
       this.logger.debug(`Session Proposal Approval Failure`);
       this.logger.trace({ type: "method", method: "approve", outcome: pending.outcome });
-      throw new Error(pending.outcome.reason);
+      throw new Error(pending.outcome.reason.message);
     }
     this.logger.debug(`Session Proposal Approval Success`);
     this.logger.trace({ type: "method", method: "approve", pending });
@@ -170,17 +208,18 @@ export class Client extends IClient {
       approved: false,
       proposal: params.proposal,
       response: SESSION_EMPTY_RESPONSE,
+      reason: params.reason,
     });
     this.logger.debug(`Session Proposal Response Success`);
     this.logger.trace({ type: "method", method: "reject", pending });
   }
 
-  public async update(params: ClientTypes.UpdateParams): Promise<void> {
-    await this.session.update(params);
+  public async upgrade(params: ClientTypes.UpgradeParams): Promise<void> {
+    await this.session.upgrade(params);
   }
 
-  public async notify(params: ClientTypes.NotifyParams): Promise<void> {
-    await this.session.notify(params);
+  public async update(params: ClientTypes.UpdateParams): Promise<void> {
+    await this.session.update(params);
   }
 
   public async request(params: ClientTypes.RequestParams): Promise<any> {
@@ -191,6 +230,10 @@ export class Client extends IClient {
     await this.session.send(params.topic, params.response);
   }
 
+  public async notify(params: ClientTypes.NotifyParams): Promise<void> {
+    await this.session.notify(params);
+  }
+
   public async disconnect(params: ClientTypes.DisconnectParams): Promise<void> {
     this.logger.debug(`Disconnecting Application`);
     this.logger.trace({ type: "method", method: "disconnect", params });
@@ -199,25 +242,35 @@ export class Client extends IClient {
 
   // ---------- Protected ----------------------------------------------- //
 
-  protected async onPairingPayload(payload: JsonRpcPayload): Promise<void> {
-    if (isJsonRpcRequest(payload)) {
-      if (payload.method === SESSION_JSONRPC.propose) {
-        this.logger.info(`Emitting ${CLIENT_EVENTS.session.proposal}`);
-        this.logger.debug({
-          type: "event",
-          event: CLIENT_EVENTS.session.proposal,
-          data: payload.params,
+  protected async onPairingRequest(request: JsonRpcRequest): Promise<void> {
+    if (request.method === SESSION_JSONRPC.propose) {
+      const proposal = request.params as SessionTypes.Proposal;
+      if (proposal.proposer.controller === this.controller) {
+        const reason = getError(ERROR.UNAUTHORIZED_MATCHING_CONTROLLER, {
+          controller: this.controller,
         });
-        this.events.emit(CLIENT_EVENTS.session.proposal, payload.params);
+        await this.session.respond({
+          approved: false,
+          proposal,
+          response: SESSION_EMPTY_RESPONSE,
+          reason,
+        });
+        return;
       }
+      this.logger.info(`Emitting ${CLIENT_EVENTS.session.proposal}`);
+      this.logger.debug({
+        type: "event",
+        event: CLIENT_EVENTS.session.proposal,
+        data: proposal,
+      });
+      this.events.emit(CLIENT_EVENTS.session.proposal, proposal);
     }
   }
 
   protected async onPairingSettled(pairing: PairingTypes.Settled) {
-    const metadata = getPairingMetadata();
-    if (typeof metadata === "undefined") return;
-    const update: PairingTypes.Update = { peer: { metadata } };
-    this.pairing.update({ topic: pairing.topic, update });
+    if (pairing.permissions.controller.publicKey === pairing.self.publicKey) {
+      this.pairing.update({ topic: pairing.topic, state: { metadata: this.metadata } });
+    }
   }
   // ---------- Private ----------------------------------------------- //
 
@@ -276,8 +329,8 @@ export class Client extends IClient {
       });
       this.events.emit(CLIENT_EVENTS.pairing.deleted, pairing);
     });
-    this.pairing.on(PAIRING_EVENTS.payload, (payloadEvent: PairingTypes.PayloadEvent) => {
-      this.onPairingPayload(payloadEvent.payload);
+    this.pairing.on(PAIRING_EVENTS.request, (requestEvent: PairingTypes.RequestEvent) => {
+      this.onPairingRequest(requestEvent.request);
     });
     // Session Subscription Events
     this.session.on(SESSION_EVENTS.proposed, (pending: SessionTypes.Pending) => {
@@ -304,14 +357,23 @@ export class Client extends IClient {
       this.logger.debug({ type: "event", event: CLIENT_EVENTS.session.deleted, data: session });
       this.events.emit(CLIENT_EVENTS.session.deleted, session);
     });
-    this.session.on(SESSION_EVENTS.payload, (payloadEvent: SessionTypes.PayloadEvent) => {
-      this.logger.info(`Emitting ${CLIENT_EVENTS.session.payload}`);
+    this.session.on(SESSION_EVENTS.request, (requestEvent: SessionTypes.RequestEvent) => {
+      this.logger.info(`Emitting ${CLIENT_EVENTS.session.request}`);
       this.logger.debug({
         type: "event",
-        event: CLIENT_EVENTS.session.payload,
-        data: payloadEvent,
+        event: CLIENT_EVENTS.session.request,
+        data: requestEvent,
       });
-      this.events.emit(CLIENT_EVENTS.session.payload, payloadEvent);
+      this.events.emit(CLIENT_EVENTS.session.request, requestEvent);
+    });
+    this.session.on(SESSION_EVENTS.response, (responseEvent: SessionTypes.ResponseEvent) => {
+      this.logger.info(`Emitting ${CLIENT_EVENTS.session.response}`);
+      this.logger.debug({
+        type: "event",
+        event: CLIENT_EVENTS.session.response,
+        data: responseEvent,
+      });
+      this.events.emit(CLIENT_EVENTS.session.response, responseEvent);
     });
     this.session.on(
       SESSION_EVENTS.notification,
@@ -333,7 +395,7 @@ function formatPairingProposal(uri: string): PairingTypes.Proposal {
   return {
     topic: uriParams.topic,
     relay: uriParams.relay,
-    proposer: { publicKey: uriParams.publicKey },
+    proposer: { publicKey: uriParams.publicKey, controller: uriParams.controller },
     signal: { method: PAIRING_SIGNAL_METHOD_URI, params: { uri } },
     permissions: { jsonrpc: { methods: [SESSION_JSONRPC.propose] } },
     ttl: PAIRING_DEFAULT_TTL,

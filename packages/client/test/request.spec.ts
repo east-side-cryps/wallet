@@ -11,10 +11,11 @@ import {
   TEST_ETHEREUM_ACCOUNTS,
   TEST_ETHEREUM_REQUEST,
   TEST_RANDOM_REQUEST,
+  TEST_TIMEOUT_DURATION,
 } from "./shared";
 
 describe("Request", function() {
-  this.timeout(30_000);
+  this.timeout(TEST_TIMEOUT_DURATION);
   let clock: sinon.SinonFakeTimers;
   beforeEach(function() {
     clock = sinon.useFakeTimers();
@@ -41,7 +42,7 @@ describe("Request", function() {
     const topic = generateRandomBytes32();
     const request = TEST_ETHEREUM_REQUEST;
     const chainId = setup.a.permissions.blockchain.chains[0];
-    const promise = clients.a.request({ topic, chainId, request });
+    const promise = clients.a.request({ topic, chainId, request, timeout: TEST_TIMEOUT_DURATION });
     await expect(promise).to.eventually.be.rejectedWith(
       `No matching session settled with topic: ${topic}`,
     );
@@ -51,20 +52,20 @@ describe("Request", function() {
     const topic = await testApproveSession(setup, clients);
     const request = TEST_RANDOM_REQUEST;
     const chainId = setup.a.permissions.blockchain.chains[0];
-    const promise = clients.a.request({ topic, chainId, request });
+    const promise = clients.a.request({ topic, chainId, request, timeout: TEST_TIMEOUT_DURATION });
     await expect(promise).to.eventually.be.rejectedWith(
       `Unauthorized JSON-RPC Method Requested: ${request.method}`,
     );
   });
-  it("A requests method and B fails to return response in time (30 secs)", async () => {
+  it("A requests method and B fails to return response in time", async () => {
     const { setup, clients } = await setupClientsForTesting();
     const topic = await testApproveSession(setup, clients);
     const request = TEST_ETHEREUM_REQUEST;
     const chainId = setup.a.permissions.blockchain.chains[0];
-    const promise = clients.a.request({ topic, chainId, request });
-    clock.tick(30_000);
+    const promise = clients.a.request({ topic, chainId, request, timeout: TEST_TIMEOUT_DURATION });
+    clock.tick(TEST_TIMEOUT_DURATION);
     await expect(promise).to.eventually.be.rejectedWith(
-      `JSON-RPC Request timeout after 30s: ${request.method}`,
+      `JSON-RPC Request timeout after ${TEST_TIMEOUT_DURATION / 1000} seconds: ${request.method}`,
     );
   });
 });

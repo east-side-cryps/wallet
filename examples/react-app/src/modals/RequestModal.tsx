@@ -1,17 +1,9 @@
 import * as React from "react";
 
 import Loader from "../components/Loader";
+import { SContainer, STable, SRow, SKey, SValue } from "../components/shared";
 
-import {
-  SModalContainer,
-  SModalTitle,
-  SModalParagraph,
-  SContainer,
-  STable,
-  SRow,
-  SKey,
-  SValue,
-} from "./shared";
+import { SModalContainer, SModalTitle, SModalParagraph } from "./shared";
 
 interface RequestModalProps {
   pending: boolean;
@@ -24,7 +16,7 @@ const RequestModal = (props: RequestModalProps) => {
     <>
       {pending ? (
         <SModalContainer>
-          <SModalTitle>{"Pending Call Request"}</SModalTitle>
+          <SModalTitle>{"Pending JSON-RPC Request"}</SModalTitle>
           <SContainer>
             <Loader />
             <SModalParagraph>{"Approve or reject request using your wallet"}</SModalParagraph>
@@ -33,10 +25,10 @@ const RequestModal = (props: RequestModalProps) => {
       ) : result ? (
         <SModalContainer>
           <SModalTitle>
-            {result.valid ? "Call Request Approved" : "Call Request Failed"}
+            {result.valid ? "JSON-RPC Request Approved" : "JSON-RPC Request Failed"}
           </SModalTitle>
           <STable>
-            {Object.keys(result).map((key) => (
+            {Object.keys(result).map(key => (
               <SRow key={key}>
                 <SKey>{key}</SKey>
                 <SValue>{result[key].toString()}</SValue>
@@ -46,7 +38,7 @@ const RequestModal = (props: RequestModalProps) => {
         </SModalContainer>
       ) : (
         <SModalContainer>
-          <SModalTitle>{"Call Request Rejected"}</SModalTitle>
+          <SModalTitle>{"JSON-RPC Request Rejected"}</SModalTitle>
         </SModalContainer>
       )}
     </>

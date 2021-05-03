@@ -4,7 +4,7 @@
   "private": true,
   "keywords": [
     "walletconnect",
-    "ethereum",
+    "neo",
     "web3",
     "crypto"
   ],
@@ -24,6 +24,7 @@
     "url": "https://github.com/walletconnect-labs/walletconnect-v2-monorepo/issues"
   },
   "dependencies": {
+    "@cityofzion/neon-js": "^4.8.3",
     "@json-rpc-tools/utils": "^1.7.2",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.1.0",
@@ -39,8 +40,6 @@
     "@walletconnect/types": "^2.0.0-alpha.42",
     "@walletconnect/utils": "^2.0.0-alpha.42",
     "axios": "^0.21.1",
-    "blockies-ts": "^1.0.0",
-    "caip-wallet": "^1.6.6",
     "keyvaluestorage": "^0.7.1",
     "prop-types": "^15.7.2",
     "react": "^17.0.2",
@@ -48,8 +47,7 @@
     "react-qr-reader": "^2.2.1",
     "react-scripts": "^4.0.1",
     "styled-components": "^5.2.0",
-    "typescript": "^4.2.3",
-    "web-vitals": "^0.2.4"
+    "typescript": "^4.2.3"
   },
   "eslintConfig": {
     "extends": [

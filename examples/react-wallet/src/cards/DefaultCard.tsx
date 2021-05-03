@@ -77,7 +77,6 @@ interface DefaultCardProps {
   openSession: (session: SessionTypes.Created) => void;
   openRequest: (requestEvent: SessionTypes.RequestEvent) => Promise<void>;
   openScanner: () => void;
-  openSettings: () => void;
   onURI: (data: any) => void;
 }
 
@@ -89,13 +88,11 @@ const DefaultCard = (props: DefaultCardProps) => {
     openSession,
     openRequest,
     openScanner,
-    openSettings,
     onURI,
   } = props;
   return (
     <Column>
       <SSection>
-        <SSettingsIcon src={settingsIcon} alt="Settings" onClick={openSettings} />
         {!!accounts.length ? (
           <React.Fragment>
             <h6>{"Accounts"}</h6>

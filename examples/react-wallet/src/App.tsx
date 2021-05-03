@@ -1,9 +1,8 @@
 import * as React from "react";
 import styled from "styled-components";
 import KeyValueStorage from "keyvaluestorage";
-import Wallet from "caip-wallet";
 import Client, { CLIENT_EVENTS } from "@walletconnect/client";
-import { JsonRpcResponse, formatJsonRpcError } from "@json-rpc-tools/utils";
+import {JsonRpcResponse, formatJsonRpcError, JsonRpcRequest} from "@json-rpc-tools/utils";
 import { ERROR, getAppMetadata, getError } from "@walletconnect/utils";
 import { SessionTypes } from "@walletconnect/types";
 
@@ -18,12 +17,14 @@ import SettingsCard from "./cards/SettingsCard";
 
 import {
   DEFAULT_APP_METADATA,
-  DEFAULT_TEST_CHAINS,
+  DEFAULT_CHAIN_ID,
   DEFAULT_LOGGER,
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
 } from "./constants";
 import { Cards, isProposalCard, isRequestCard, isSessionCard, isSettingsCard } from "./helpers";
+import {wallet} from "@cityofzion/neon-js";
+import {AccountJSON} from "@cityofzion/neon-core/lib/wallet/Account";
 
 const SContainer = styled.div`
   display: flex;
@@ -58,7 +59,6 @@ const SContent = styled.div`
 export interface AppState {
   client: Client | undefined;
   storage: KeyValueStorage | undefined;
-  wallet: Wallet | undefined;
   loading: boolean;
   scanner: boolean;
   chains: string[];
@@ -72,10 +72,9 @@ export interface AppState {
 export const INITIAL_STATE: AppState = {
   client: undefined,
   storage: undefined,
-  wallet: undefined,
   loading: false,
   scanner: false,
-  chains: DEFAULT_TEST_CHAINS,
+  chains: [DEFAULT_CHAIN_ID],
   accounts: [],
   sessions: [],
   requests: [],
@@ -93,22 +92,21 @@ class App extends React.Component<{}> {
     };
   }
   public componentDidMount() {
-    this.init();
+    this.init().then(() => {});
   }
 
-  public init = async (mnemonic?: string) => {
+  public init = async () => {
     this.setState({ loading: true });
     try {
       const storage = new KeyValueStorage();
-      const wallet = await Wallet.init({ chains: this.state.chains, storage, mnemonic });
       const client = await Client.init({
         controller: true,
         relayProvider: DEFAULT_RELAY_PROVIDER,
         logger: DEFAULT_LOGGER,
         storage,
       });
-      const accounts = await wallet.getAccounts();
-      this.setState({ loading: false, storage, client, wallet, accounts });
+      const accounts = await this.getAccounts(storage)
+      this.setState({ loading: false, storage, client, accounts });
       this.subscribeToEvents();
       await this.checkPersistedState();
     } catch (e) {
@@ -117,10 +115,15 @@ class App extends React.Component<{}> {
     }
   };
 
-  public importMnemonic = async (mnemonic: string) => {
-    this.resetApp();
-    this.init(mnemonic);
-  };
+  public getAccounts = async (storage: KeyValueStorage) => {
+    const json = await storage.getItem<Partial<AccountJSON>>("account")
+    const account = new wallet.Account(json)
+    if (!json) {
+      await account.encrypt("mypassword")
+      await storage.setItem("account", account.export())
+    }
+    return [`${account.address}@${DEFAULT_CHAIN_ID}`]
+  }
 
   public resetApp = async () => {
     this.setState({ ...INITIAL_STATE });
@@ -160,19 +163,14 @@ class App extends React.Component<{}> {
     this.state.client.on(
       CLIENT_EVENTS.session.request,
       async (requestEvent: SessionTypes.RequestEvent) => {
-        if (typeof this.state.wallet === "undefined") {
-          throw new Error("Wallet is not initialized");
-        }
         // tslint:disable-next-line
         console.log("EVENT", CLIENT_EVENTS.session.request, requestEvent.request);
-        const chainId = requestEvent.chainId || this.state.chains[0];
         try {
-          // TODO: needs improvement
-          const requiresApproval = this.state.wallet.auth[chainId].assert(requestEvent.request);
-          if (requiresApproval) {
+          const alreadyApproved = await this.checkApprovedRequest(requestEvent.request);
+          if (!alreadyApproved) {
             this.setState({ requests: [...this.state.requests, requestEvent] });
           } else {
-            const response = await this.state.wallet.resolve(requestEvent.request, chainId);
+            const response = await this.makeRequest(requestEvent.request)
             await this.respondRequest(requestEvent.topic, response);
           }
         } catch (e) {
@@ -208,6 +206,26 @@ class App extends React.Component<{}> {
     this.setState({ sessions, requests });
   };
 
+  // ---- MAKE REQUESTS AND SAVE/CHECK IF APPROVED ------------------------------//
+
+  public approveAndMakeRequest = async (request: JsonRpcRequest) => {
+    this.state.storage?.setItem(`request-${JSON.stringify(request)}`, true)
+    return await this.makeRequest(request)
+  }
+
+  public makeRequest = async (request: JsonRpcRequest) => {
+    // TODO: make the blockchain request
+    return { // await this.state.wallet.resolve(requestEvent.request, chainId);
+      id: 1,
+      jsonrpc: '',
+      result: null,
+    }
+  }
+
+  public checkApprovedRequest = async (request: JsonRpcRequest) => {
+    return await this.state.storage?.getItem<boolean>(`request-${JSON.stringify(request)}`)
+  }
+
   // ---- Scanner --------------------------------------------------------------//
 
   public openScanner = () => {
@@ -232,7 +250,7 @@ class App extends React.Component<{}> {
   };
 
   public onScannerScan = async (data: any) => {
-    this.onURI(data);
+    await this.onURI(data);
     this.closeScanner();
   };
 
@@ -269,15 +287,6 @@ class App extends React.Component<{}> {
     }
     const { peer } = await this.state.client.session.get(requestEvent.topic);
     this.openCard({ type: "request", data: { requestEvent, peer } });
-  };
-
-  public openSettings = () => {
-    if (typeof this.state.wallet === "undefined") {
-      throw new Error("Wallet is not initialized");
-    }
-    const { chains } = this.state;
-    const { mnemonic } = this.state.wallet;
-    this.openCard({ type: "settings", data: { mnemonic, chains } });
   };
 
   // ---- Session --------------------------------------------------------------//
@@ -344,18 +353,14 @@ class App extends React.Component<{}> {
       throw new Error("Client is not initialized");
     }
     try {
-      if (typeof this.state.wallet === "undefined") {
-        throw new Error("Wallet is not initialized");
-      }
-      const chainId = requestEvent.chainId || this.state.chains[0];
-      const response = await this.state.wallet.approve(requestEvent.request as any, chainId);
-      this.state.client.respond({
+      const response = await this.approveAndMakeRequest(requestEvent.request)
+      await this.state.client.respond({
         topic: requestEvent.topic,
         response,
       });
     } catch (error) {
       console.error(error);
-      this.state.client.respond({
+      await this.state.client.respond({
         topic: requestEvent.topic,
         response: formatJsonRpcError(requestEvent.request.id, "Failed or Rejected Request"),
       });
@@ -369,7 +374,7 @@ class App extends React.Component<{}> {
     if (typeof this.state.client === "undefined") {
       throw new Error("Client is not initialized");
     }
-    this.state.client.respond({
+    await this.state.client.respond({
       topic: requestEvent.topic,
       response: formatJsonRpcError(requestEvent.request.id, "Failed or Rejected Request"),
     });
@@ -419,7 +424,6 @@ class App extends React.Component<{}> {
           openSession={this.openSession}
           openRequest={this.openRequest}
           openScanner={this.openScanner}
-          openSettings={this.openSettings}
           onURI={this.onURI}
         />
       );

@@ -6,7 +6,6 @@ import Button from "./Button";
 import Column from "./Column";
 import Loader from "./Loader";
 
-import { getChainMetadata } from "../chains";
 import { AccountAction, ellipseAddress, AccountBalances, ChainMetadata } from "../helpers";
 import { fonts } from "../styles";
 
@@ -77,9 +76,8 @@ const SBlockchainChildrenContainer = styled(SFullWidthContainer)`
 interface BlockchainProps {
   fetching?: boolean;
   active?: boolean;
-  chainId: string;
   address?: string;
-  onClick?: (chain: string) => void;
+  onClick?: () => void;
   balances?: AccountBalances;
   actions?: AccountAction[];
 }
@@ -87,21 +85,20 @@ interface BlockchainProps {
 const Blockchain: FC<PropsWithChildren<BlockchainProps>> = (
   props: PropsWithChildren<BlockchainProps>,
 ) => {
-  const { fetching, chainId, address, onClick, active, balances, actions } = props;
-  let chainMeta: ChainMetadata;
-  try {
-    chainMeta = getChainMetadata(chainId);
-  } catch (e) {
-    return null;
+  const { fetching, address, onClick, active, balances, actions } = props;
+  const chainMeta: ChainMetadata = {
+    name: 'Neo3',
+    logo: 'https://cryptologos.cc/logos/neo-neo-logo.svg',
+    rgb: '#00e599'
   }
-  const account = typeof address !== "undefined" ? `${address}@${chainId}` : undefined;
+
   const assets =
-    typeof account !== "undefined" && typeof balances !== "undefined" ? balances[account] : [];
+    typeof address !== "undefined" && typeof balances !== "undefined" ? balances[address] : [];
   return (
     <React.Fragment>
       <SAccount
         rgb={chainMeta.rgb}
-        onClick={() => onClick && onClick(props.chainId)}
+        onClick={() => onClick && onClick()}
         className={active ? "active" : ""}
       >
         <SChain>
@@ -136,7 +133,7 @@ const Blockchain: FC<PropsWithChildren<BlockchainProps>> = (
                       key={action.method}
                       left
                       rgb={chainMeta.rgb}
-                      onClick={() => action.callback(chainId)}
+                      onClick={() => action.callback()}
                     >
                       {action.method}
                     </SAction>

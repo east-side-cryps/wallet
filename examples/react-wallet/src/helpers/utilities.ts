@@ -95,14 +95,6 @@ export function convertHexToNumber(hex: string) {
   }
 }
 
-export function convertHexToUtf8(hex: string) {
-  try {
-    return encUtils.hexToUtf8(hex);
-  } catch (e) {
-    return hex;
-  }
-}
-
 export function isProposalCard(card: Cards.All): card is Cards.Proposal {
   return card.type === "proposal";
 }

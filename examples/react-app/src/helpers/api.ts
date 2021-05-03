@@ -1,8 +1,10 @@
 import axios, { AxiosInstance } from "axios";
 import { AssetData, GasPrices, ParsedTx } from "./types";
 
+// TODO: use Dora to get Neo public information, but maybe we don't need this for the prototype
+
 const api: AxiosInstance = axios.create({
-  baseURL: "https://ethereum-api.xyz",
+  baseURL: "https://",
   timeout: 30000, // 30 secs
   headers: {
     Accept: "application/json",
@@ -10,9 +12,8 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-export async function apiGetAccountAssets(address: string, chainId: string): Promise<AssetData[]> {
-  const ethChainId = chainId.split(":")[1];
-  const response = await api.get(`/account-assets?address=${address}&chainId=${ethChainId}`);
+export async function apiGetAccountAssets(address: string): Promise<AssetData[]> {
+  const response = await api.get(`/account-assets?address=${address}`);
   const { result } = response.data;
   return result;
 }

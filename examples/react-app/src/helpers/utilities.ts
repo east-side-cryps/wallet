@@ -1,10 +1,4 @@
-import { BigNumber, BigNumberish, providers, utils } from "ethers";
 import * as encUtils from "enc-utils";
-import { getChainConfig } from "caip-api";
-import { TypedDataUtils } from "eth-sig-util";
-import * as ethUtil from "ethereumjs-util";
-
-import { eip1271 } from "./eip1271";
 
 export function capitalize(string: string): string {
   return string
@@ -82,76 +76,6 @@ export function isMobile(): boolean {
   return mobile;
 }
 
-export function encodePersonalMessage(msg: string): string {
-  const data = encUtils.utf8ToBuffer(msg);
-  const buf = Buffer.concat([
-    Buffer.from("\u0019Ethereum Signed Message:\n" + data.length.toString(), "utf8"),
-    data,
-  ]);
-  return ethUtil.bufferToHex(buf);
-}
-
-export function hashPersonalMessage(msg: string): string {
-  const data = encodePersonalMessage(msg);
-  const buf = ethUtil.toBuffer(data);
-  const hash = ethUtil.keccak256(buf);
-  return ethUtil.bufferToHex(hash);
-}
-
-export function encodeTypedDataMessage(msg: string): string {
-  const data = TypedDataUtils.sanitizeData(JSON.parse(msg));
-  const buf = Buffer.concat([
-    Buffer.from("1901", "hex"),
-    TypedDataUtils.hashStruct("EIP712Domain", data.domain, data.types),
-    TypedDataUtils.hashStruct(data.primaryType as string, data.message, data.types),
-  ]);
-  return ethUtil.bufferToHex(buf);
-}
-
-export function hashTypedDataMessage(msg: string): string {
-  const data = encodeTypedDataMessage(msg);
-  const buf = ethUtil.toBuffer(data);
-  const hash = ethUtil.keccak256(buf);
-  return ethUtil.bufferToHex(hash);
-}
-
-export function recoverAddress(sig: string, hash: string): string {
-  const params = ethUtil.fromRpcSig(sig);
-  const result = ethUtil.ecrecover(ethUtil.toBuffer(hash), params.v, params.r, params.s);
-  const signer = ethUtil.bufferToHex(ethUtil.publicToAddress(result));
-  return signer;
-}
-
-export function recoverPersonalSignature(sig: string, msg: string): string {
-  const hash = hashPersonalMessage(msg);
-  const signer = recoverAddress(sig, hash);
-  return signer;
-}
-
-export function recoverTypedMessage(sig: string, msg: string): string {
-  const hash = hashTypedDataMessage(msg);
-  const signer = recoverAddress(sig, hash);
-  return signer;
-}
-
-export async function verifySignature(
-  address: string,
-  sig: string,
-  hash: string,
-  chainId: number,
-): Promise<boolean> {
-  const chainConfig = getChainConfig(`eip155:${chainId}`);
-  const rpcUrl = `https://${chainConfig.rpcUrl}`;
-  const provider = new providers.JsonRpcProvider(rpcUrl);
-  const bytecode = await provider.getCode(address);
-  if (!bytecode || bytecode === "0x" || bytecode === "0x0" || bytecode === "0x00") {
-    const signer = recoverAddress(sig, hash);
-    return signer.toLowerCase() === address.toLowerCase();
-  } else {
-    return eip1271.isValidSignature(address, sig, hash, provider);
-  }
-}
-
 export function convertHexToNumber(hex: string) {
   try {
     return encUtils.hexToNumber(hex);
@@ -159,27 +83,3 @@ export function convertHexToNumber(hex: string) {
     return hex;
   }
 }
-
-export function convertHexToUtf8(hex: string) {
-  try {
-    return encUtils.hexToUtf8(hex);
-  } catch (e) {
-    return hex;
-  }
-}
-
-export const sanitizeDecimals = (value: string, decimals = 18): string => {
-  const [integer, fractional] = value.split(".");
-  const _fractional = fractional
-    ? fractional.substring(0, decimals).replace(/0+$/gi, "")
-    : undefined;
-  return _fractional ? [integer, _fractional].join(".") : integer;
-};
-
-export const toWad = (amount: string, decimals = 18): BigNumber => {
-  return utils.parseUnits(sanitizeDecimals(amount, decimals), decimals);
-};
-
-export const fromWad = (wad: BigNumberish, decimals = 18): string => {
-  return sanitizeDecimals(utils.formatUnits(wad, decimals), decimals);
-};

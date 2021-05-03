@@ -4,7 +4,7 @@
   "private": true,
   "keywords": [
     "walletconnect",
-    "ethereum",
+    "neo",
     "web3",
     "crypto"
   ],
@@ -43,19 +43,13 @@
     "@walletconnect/types": "^2.0.0-alpha.42",
     "@walletconnect/utils": "^2.0.0-alpha.42",
     "axios": "^0.21.1",
-    "blockies-ts": "^1.0.0",
-    "caip-api": "^1.4.6",
-    "eth-sig-util": "^2.5.3",
-    "ethereumjs-util": "^7.0.6",
-    "ethers": "^5.0.30",
     "prop-types": "^15.7.2",
     "qr-image": "^3.2.0",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-scripts": "^4.0.1",
     "styled-components": "^5.2.0",
-    "typescript": "^4.2.3",
-    "web-vitals": "^0.2.4"
+    "typescript": "^4.2.3"
   },
   "eslintConfig": {
     "extends": [

@@ -1,7 +1,6 @@
 import * as React from "react";
 import styled from "styled-components";
 
-import { getChainMetadata } from "../chains";
 import { ChainMetadata, ellipseAddress } from "../helpers";
 
 interface AccountStyleProps {
@@ -43,12 +42,11 @@ interface BlockchainProps {
 }
 
 const Blockchain = (props: BlockchainProps) => {
-  const { chainId, address } = props;
-  let chainMeta: ChainMetadata;
-  try {
-    chainMeta = getChainMetadata(chainId);
-  } catch (e) {
-    return null;
+  const { address } = props;
+  const chainMeta: ChainMetadata = {
+    name: 'Neo3',
+    logo: 'https://cryptologos.cc/logos/neo-neo-logo.svg',
+    rgb: '#00e599'
   }
   return (
     <React.Fragment>

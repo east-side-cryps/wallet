@@ -1,5 +1,3 @@
-import { ChainConfig } from "caip-api";
-
 export interface AssetData {
   symbol: string;
   name: string;
@@ -8,16 +6,6 @@ export interface AssetData {
   balance?: string;
 }
 
-export interface ChainData {
-  name: string;
-  short_name: string;
-  chain: string;
-  network: string;
-  chain_id: number;
-  network_id: number;
-  rpc_url: string;
-  native_currency: AssetData;
-}
 export interface TxData {
   from: string;
   to: string;
@@ -36,28 +24,6 @@ export interface BlockScoutTx {
   timeStamp: string;
   nonce: string;
   isError: string;
-  input: string;
-  hash: string;
-  gasUsed: string;
-  gasPrice: string;
-  gas: string;
-  from: string;
-  cumulativeGasUsed: string;
-  contractAddress: string;
-  confirmations: string;
-  blockNumber: string;
-  blockHash: string;
-}
-
-export interface BlockScoutTokenTx {
-  value: string;
-  transactionIndex: string;
-  tokenSymbol: string;
-  tokenName: string;
-  tokenDecimal: string;
-  to: string;
-  timeStamp: string;
-  nonce: string;
   input: string;
   hash: string;
   gasUsed: string;
@@ -136,7 +102,8 @@ export interface ChainRequestRender {
   value: string;
 }
 
-export interface ChainMetadata extends ChainConfig {
+export interface ChainMetadata {
+  name: string;
   logo: string;
   rgb: string;
 }
@@ -147,7 +114,7 @@ export interface NamespaceMetadata {
 
 export interface AccountAction {
   method: string;
-  callback: (chainId: string) => Promise<void>;
+  callback: () => Promise<void>;
 }
 
 export interface AccountBalances {

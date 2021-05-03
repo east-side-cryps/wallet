@@ -1,5 +1,4 @@
 import { SessionTypes } from "@walletconnect/types";
-import { ChainConfig } from "caip-wallet";
 
 import { AppState } from "../App";
 
@@ -13,7 +12,8 @@ export interface AppEvents {
   update: (state: AppState, setState: any) => Promise<void>;
 }
 
-export interface ChainMetadata extends ChainConfig {
+export interface ChainMetadata {
+  name: string;
   logo: string;
   rgb: string;
 }

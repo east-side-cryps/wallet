@@ -5,9 +5,8 @@ import { AppMetadata, SessionTypes } from "@walletconnect/types";
 import Column from "../components/Column";
 import Button from "../components/Button";
 import Blockchain from "../components/Blockchain";
-
-import { getChainRequestRender } from "../chains";
 import Peer from "../components/Peer";
+import {JsonRpcRequest} from "@json-rpc-tools/utils";
 
 const SValue = styled.div`
   font-family: monospace;
@@ -39,9 +38,24 @@ interface RequestCardProps {
   rejectRequest: (requestEvent: SessionTypes.RequestEvent) => void;
 }
 
+const getChainRequestRender = (request: JsonRpcRequest<any>) => {
+    let params = [{ label: "Method", value: request.method }];
+
+    request.params.forEach((p: any, i: number) => {
+        if (typeof p !== 'object') {
+            params.push({label: i.toString(10), value: p.toString()})
+        } else {
+            Object.keys(p).forEach((k: string) => {
+                params.push({label: k, value: p[k]})
+            })
+        }
+    })
+    return params;
+}
+
 const RequestCard = (props: RequestCardProps) => {
   const { chainId, requestEvent, metadata, approveRequest, rejectRequest } = props;
-  const params = getChainRequestRender(requestEvent.request, chainId);
+  const params = getChainRequestRender(requestEvent.request);
   console.log("RENDER", "method", requestEvent.request.method);
   console.log("RENDER", "params", requestEvent.request.params);
   console.log("RENDER", "formatted", params);

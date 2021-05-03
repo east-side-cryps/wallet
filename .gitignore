@@ -31,3 +31,4 @@ zip
 tsconfig.tsbuildinfo
 config
 test.db
+.idea/

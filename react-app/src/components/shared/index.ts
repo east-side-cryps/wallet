@@ -26,7 +26,7 @@ export const SKey = styled.div`
   font-weight: 700;
 `;
 
-export const SValue = styled.div`
+export const SValue = styled.pre`
   width: 70%;
   font-family: monospace;
 `;

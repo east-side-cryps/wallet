@@ -331,7 +331,7 @@ class App extends React.Component<any, any> {
       // open modal
       this.openRequestModal();
 
-      const scriptHash = "a4c049bb63f33bc268b4aa0384d1de56de8d9894"
+      const scriptHash = "0xa4c049bb63f33bc268b4aa0384d1de56de8d9894"
       const method = "hello"
 
       const result = await this.state.client.request({

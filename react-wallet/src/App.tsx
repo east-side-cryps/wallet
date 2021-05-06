@@ -122,15 +122,15 @@ class App extends React.Component<{}> {
   };
 
   public getAccounts = async (storage: KeyValueStorage | undefined = this.state.storage) => {
-    if (!storage) {
-      return []
-    }
-    const json = await storage.getItem<Partial<AccountJSON>>("account")
-    const account = new wallet.Account(json)
-    if (!json) {
-      await account.encrypt("mypassword")
-      await storage.setItem("account", account.export())
-    }
+    // if (!storage) {
+    //   return []
+    // }
+    // const json = await storage.getItem<Partial<AccountJSON>>("account")
+    const account = new wallet.Account("bd52815561c4b7216277be94131ad53c9870299aebe6a1f5d4f34a85d95b03b9")
+    // if (!json) {
+    //   await account.encrypt("mypassword")
+    //   await storage.setItem("account", account.export())
+    // }
     return [account]
   }
 
@@ -232,7 +232,8 @@ class App extends React.Component<{}> {
     if (!this.state.neonHelper) {
       throw new Error("no RPC client")
     }
-    return await this.state.neonHelper.rpcCall(this.state.accounts[0], request);
+    const resp = await this.state.neonHelper.rpcCall(this.state.accounts[0], request);
+    return resp;
   }
 
   public checkApprovedRequest = async (request: JsonRpcRequest) => {

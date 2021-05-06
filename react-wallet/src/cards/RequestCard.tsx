@@ -56,9 +56,6 @@ const getChainRequestRender = (request: JsonRpcRequest<any>) => {
 const RequestCard = (props: RequestCardProps) => {
   const { chainId, requestEvent, metadata, approveRequest, rejectRequest } = props;
   const params = getChainRequestRender(requestEvent.request);
-  console.log("RENDER", "method", requestEvent.request.method);
-  console.log("RENDER", "params", requestEvent.request.params);
-  console.log("RENDER", "formatted", params);
 
   return (
     <Column>

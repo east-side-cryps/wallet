@@ -10,6 +10,14 @@ interface RequestModalProps {
   result: any;
 }
 
+const formatResultValue = (value: any) => {
+  if (typeof value === "object") {
+    return JSON.stringify(value, null, 2)
+  } else {
+    return value.toString()
+  }
+}
+
 const RequestModal = (props: RequestModalProps) => {
   const { pending, result } = props;
   return (
@@ -25,13 +33,13 @@ const RequestModal = (props: RequestModalProps) => {
       ) : result ? (
         <SModalContainer>
           <SModalTitle>
-            {result.valid ? "JSON-RPC Request Approved" : "JSON-RPC Request Failed"}
+            {result.valid !== false ? "JSON-RPC Request Approved" : "JSON-RPC Request Failed"}
           </SModalTitle>
           <STable>
             {Object.keys(result).map(key => (
               <SRow key={key}>
                 <SKey>{key}</SKey>
-                <SValue>{result[key].toString()}</SValue>
+                <SValue>{formatResultValue(result[key])}</SValue>
               </SRow>
             ))}
           </STable>

@@ -9,19 +9,9 @@ import Column from "../components/Column";
 import Blockchain from "../components/Blockchain";
 import Method from "../components/Method";
 
-import settingsIcon from "../assets/settings.svg";
-
 const SSection = styled.div`
   width: 100%;
   position: relative;
-`;
-
-const SSettingsIcon = styled.img`
-  position: absolute;
-  width: 24px;
-  height: 24px;
-  right: 8px;
-  top: 15px;
 `;
 
 const SSession = styled.div`

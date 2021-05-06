@@ -21,10 +21,13 @@ import {
   DEFAULT_LOGGER,
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
+  DEFAULT_NEO_NETWORK,
+  DEFAULT_NEO_NETWORK_MAGIC,
 } from "./constants";
 import { Cards, isProposalCard, isRequestCard, isSessionCard, isSettingsCard } from "./helpers";
 import {wallet} from "@cityofzion/neon-js";
-import {AccountJSON} from "@cityofzion/neon-core/lib/wallet/Account";
+import {Account, AccountJSON} from "@cityofzion/neon-core/lib/wallet/Account";
+import {NeonHelper} from "./helpers/NeonHelper";
 
 const SContainer = styled.div`
   display: flex;
@@ -57,12 +60,13 @@ const SContent = styled.div`
 `;
 
 export interface AppState {
-  client: Client | undefined;
+  wcClient: Client | undefined;
   storage: KeyValueStorage | undefined;
+  neonHelper: NeonHelper | undefined;
   loading: boolean;
   scanner: boolean;
   chains: string[];
-  accounts: string[];
+  accounts: Account[];
   sessions: SessionTypes.Created[];
   requests: SessionTypes.RequestEvent[];
   results: any[];
@@ -70,8 +74,9 @@ export interface AppState {
 }
 
 export const INITIAL_STATE: AppState = {
-  client: undefined,
+  wcClient: undefined,
   storage: undefined,
+  neonHelper: undefined,
   loading: false,
   scanner: false,
   chains: [DEFAULT_CHAIN_ID],
@@ -99,14 +104,15 @@ class App extends React.Component<{}> {
     this.setState({ loading: true });
     try {
       const storage = new KeyValueStorage();
-      const client = await Client.init({
+      const wcClient = await Client.init({
         controller: true,
         relayProvider: DEFAULT_RELAY_PROVIDER,
         logger: DEFAULT_LOGGER,
         storage,
       });
       const accounts = await this.getAccounts(storage)
-      this.setState({ loading: false, storage, client, accounts });
+      const neonHelper = new NeonHelper(DEFAULT_NEO_NETWORK, DEFAULT_NEO_NETWORK_MAGIC);
+      this.setState({ loading: false, storage, wcClient, accounts, neonHelper });
       this.subscribeToEvents();
       await this.checkPersistedState();
     } catch (e) {
@@ -115,15 +121,24 @@ class App extends React.Component<{}> {
     }
   };
 
-  public getAccounts = async (storage: KeyValueStorage) => {
+  public getAccounts = async (storage: KeyValueStorage | undefined = this.state.storage) => {
+    if (!storage) {
+      return []
+    }
     const json = await storage.getItem<Partial<AccountJSON>>("account")
     const account = new wallet.Account(json)
     if (!json) {
       await account.encrypt("mypassword")
       await storage.setItem("account", account.export())
     }
-    return [`${account.address}@${DEFAULT_CHAIN_ID}`]
+    return [account]
   }
+
+  public accountsAsString = (accounts: Account[]) => {
+    return accounts.map(acc => this.accAsStr(acc));
+  }
+
+  public accAsStr = (acc: Account) => `${acc.address}@${DEFAULT_CHAIN_ID}`
 
   public resetApp = async () => {
     this.setState({ ...INITIAL_STATE });
@@ -132,12 +147,12 @@ class App extends React.Component<{}> {
   public subscribeToEvents = () => {
     console.log("ACTION", "subscribeToEvents");
 
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
 
-    this.state.client.on(CLIENT_EVENTS.session.proposal, (proposal: SessionTypes.Proposal) => {
-      if (typeof this.state.client === "undefined") {
+    this.state.wcClient.on(CLIENT_EVENTS.session.proposal, (proposal: SessionTypes.Proposal) => {
+      if (typeof this.state.wcClient === "undefined") {
         throw new Error("Client is not initialized");
       }
       console.log("EVENT", "session_proposal");
@@ -147,7 +162,7 @@ class App extends React.Component<{}> {
         unsupportedChains.push(chainId);
       });
       if (unsupportedChains.length) {
-        return this.state.client.reject({ proposal });
+        return this.state.wcClient.reject({ proposal });
       }
       const unsupportedMethods = [];
       proposal.permissions.jsonrpc.methods.forEach(method => {
@@ -155,12 +170,12 @@ class App extends React.Component<{}> {
         unsupportedMethods.push(method);
       });
       if (unsupportedMethods.length) {
-        return this.state.client.reject({ proposal });
+        return this.state.wcClient.reject({ proposal });
       }
       this.openProposal(proposal);
     });
 
-    this.state.client.on(
+    this.state.wcClient.on(
       CLIENT_EVENTS.session.request,
       async (requestEvent: SessionTypes.RequestEvent) => {
         // tslint:disable-next-line
@@ -180,29 +195,29 @@ class App extends React.Component<{}> {
       },
     );
 
-    this.state.client.on(CLIENT_EVENTS.session.created, () => {
-      if (typeof this.state.client === "undefined") {
+    this.state.wcClient.on(CLIENT_EVENTS.session.created, () => {
+      if (typeof this.state.wcClient === "undefined") {
         throw new Error("Client is not initialized");
       }
       console.log("EVENT", "session_created");
-      this.setState({ sessions: this.state.client.session.values });
+      this.setState({ sessions: this.state.wcClient.session.values });
     });
 
-    this.state.client.on(CLIENT_EVENTS.session.deleted, () => {
-      if (typeof this.state.client === "undefined") {
+    this.state.wcClient.on(CLIENT_EVENTS.session.deleted, () => {
+      if (typeof this.state.wcClient === "undefined") {
         throw new Error("Client is not initialized");
       }
       console.log("EVENT", "session_deleted");
-      this.setState({ sessions: this.state.client.session.values });
+      this.setState({ sessions: this.state.wcClient.session.values });
     });
   };
 
   public checkPersistedState = async () => {
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
-    const requests = this.state.client.session.history.pending;
-    const sessions = this.state.client.session.values;
+    const requests = this.state.wcClient.session.history.pending;
+    const sessions = this.state.wcClient.session.values;
     this.setState({ sessions, requests });
   };
 
@@ -214,12 +229,10 @@ class App extends React.Component<{}> {
   }
 
   public makeRequest = async (request: JsonRpcRequest) => {
-    // TODO: make the blockchain request
-    return { // await this.state.wallet.resolve(requestEvent.request, chainId);
-      id: 1,
-      jsonrpc: '',
-      result: null,
+    if (!this.state.neonHelper) {
+      throw new Error("no RPC client")
     }
+    return await this.state.neonHelper.rpcCall(this.state.accounts[0], request);
   }
 
   public checkApprovedRequest = async (request: JsonRpcRequest) => {
@@ -263,10 +276,10 @@ class App extends React.Component<{}> {
   public onURI = async (data: any) => {
     const uri = typeof data === "string" ? data : "";
     if (!uri) return;
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
-    await this.state.client.pair({ uri });
+    await this.state.wcClient.pair({ uri });
   };
 
   // ---- Cards --------------------------------------------------------------//
@@ -282,10 +295,10 @@ class App extends React.Component<{}> {
     this.openCard({ type: "session", data: { session } });
 
   public openRequest = async (requestEvent: SessionTypes.RequestEvent) => {
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
-    const { peer } = await this.state.client.session.get(requestEvent.topic);
+    const { peer } = await this.state.wcClient.session.get(requestEvent.topic);
     this.openCard({ type: "request", data: { requestEvent, peer } });
   };
 
@@ -293,40 +306,40 @@ class App extends React.Component<{}> {
 
   public approveSession = async (proposal: SessionTypes.Proposal) => {
     console.log("ACTION", "approveSession");
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
     if (typeof this.state.accounts === "undefined") {
       throw new Error("Accounts is undefined");
     }
     const accounts = this.state.accounts.filter(account => {
-      const chainId = account.split("@")[1];
+      const chainId = this.accAsStr(account).split("@")[1];
       return proposal.permissions.blockchain.chains.includes(chainId);
     });
     const response = {
-      state: { accounts },
+      state: { accounts: this.accountsAsString(accounts) },
       metadata: getAppMetadata() || DEFAULT_APP_METADATA,
     };
-    const session = await this.state.client.approve({ proposal, response });
+    const session = await this.state.wcClient.approve({ proposal, response });
     this.resetCard();
     this.setState({ session });
   };
 
   public rejectSession = async (proposal: SessionTypes.Proposal) => {
     console.log("ACTION", "rejectSession");
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
-    await this.state.client.reject({ proposal });
+    await this.state.wcClient.reject({ proposal });
     this.resetCard();
   };
 
   public disconnect = async (topic: string) => {
     console.log("ACTION", "disconnect");
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
-    await this.state.client.disconnect({
+    await this.state.wcClient.disconnect({
       topic,
       reason: getError(ERROR.USER_DISCONNECTED),
     });
@@ -342,25 +355,25 @@ class App extends React.Component<{}> {
   };
 
   public respondRequest = async (topic: string, response: JsonRpcResponse) => {
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
-    await this.state.client.respond({ topic, response });
+    await this.state.wcClient.respond({ topic, response });
   };
 
   public approveRequest = async (requestEvent: SessionTypes.RequestEvent) => {
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
     try {
       const response = await this.approveAndMakeRequest(requestEvent.request)
-      await this.state.client.respond({
+      await this.state.wcClient.respond({
         topic: requestEvent.topic,
         response,
       });
     } catch (error) {
       console.error(error);
-      await this.state.client.respond({
+      await this.state.wcClient.respond({
         topic: requestEvent.topic,
         response: formatJsonRpcError(requestEvent.request.id, "Failed or Rejected Request"),
       });
@@ -371,10 +384,10 @@ class App extends React.Component<{}> {
   };
 
   public rejectRequest = async (requestEvent: SessionTypes.RequestEvent) => {
-    if (typeof this.state.client === "undefined") {
+    if (typeof this.state.wcClient === "undefined") {
       throw new Error("Client is not initialized");
     }
-    await this.state.client.respond({
+    await this.state.wcClient.respond({
       topic: requestEvent.topic,
       response: formatJsonRpcError(requestEvent.request.id, "Failed or Rejected Request"),
     });
@@ -418,7 +431,7 @@ class App extends React.Component<{}> {
     } else {
       content = (
         <DefaultCard
-          accounts={accounts}
+          accounts={this.accountsAsString(accounts)}
           sessions={sessions}
           requests={requests}
           openSession={this.openSession}

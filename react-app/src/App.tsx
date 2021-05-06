@@ -5,7 +5,6 @@ import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
 import { PairingTypes, SessionTypes } from "@walletconnect/types";
 import { ERROR, getAppMetadata, getError } from "@walletconnect/utils";
-import * as encUtils from "enc-utils";
 import Blockchain from "./components/Blockchain";
 import Button from "./components/Button";
 import Column from "./components/Column";
@@ -278,7 +277,7 @@ class App extends React.Component<any, any> {
     this.connect();
   };
 
-  public testSendTransaction = async () => {
+  public testGetBestBlockHash = async () => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
@@ -297,16 +296,15 @@ class App extends React.Component<any, any> {
         topic: this.state.session.topic,
         chainId: DEFAULT_CHAIN_ID,
         request: {
-          method: "sendTransaction",
+          method: "getbestblockhash",
           params: [],
         },
       });
 
       // format displayed result
       const formattedResult = {
-        method: "sendTransaction",
+        method: "getbestblockhash",
         address,
-        valid: true,
         result,
       };
 
@@ -318,7 +316,7 @@ class App extends React.Component<any, any> {
     }
   };
 
-  public testSignPersonalMessage = async () => {
+  public testInvokeFunction = async () => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
@@ -327,83 +325,28 @@ class App extends React.Component<any, any> {
     }
 
     try {
-      // test message
-      const message = `My email is john@doe.com - ${Date.now()}`;
-
-      // encode message (hex)
-      const hexMsg = encUtils.utf8ToHex(message, true);
-
       const account = this.state.accounts[0]
       const [address] = account.split("@")
-      if (address === undefined) throw new Error("Address is not valid");
-
-      // personal_sign params
-      const params = [hexMsg, address];
 
       // open modal
       this.openRequestModal();
 
-      // send message
+      const scriptHash = "a4c049bb63f33bc268b4aa0384d1de56de8d9894"
+      const method = "hello"
+
       const result = await this.state.client.request({
         topic: this.state.session.topic,
         chainId: DEFAULT_CHAIN_ID,
         request: {
-          method: "personal_sign",
-          params,
+          method: "invokefunction",
+          params: [scriptHash, method],
         },
       });
 
       // format displayed result
       const formattedResult = {
-        method: "personal_sign",
+        method: "invokefunction",
         address,
-        valid: true, // TODO: do we need to verify the signature via RPC server? Maybe not for the prototype
-        result,
-      };
-
-      // display result
-      this.setState({ pending: false, result: formattedResult || null });
-    } catch (error) {
-      console.error(error);
-      this.setState({ pending: false, result: null });
-    }
-  };
-
-  public testSignTypedData = async () => {
-    if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
-    }
-    if (typeof this.state.session === "undefined") {
-      throw new Error("Session is not connected");
-    }
-    try {
-      // test message
-      const message = JSON.stringify({ myMessage: 'is like this'});
-
-      const address = this.state.accounts.find(account => account.endsWith(DEFAULT_CHAIN_ID))?.split("@")[0];
-      if (address === undefined) throw new Error("Address is not valid");
-
-      // signTypedData params
-      const params = [address, message];
-
-      // open modal
-      this.openRequestModal();
-
-      // send message
-      const result = await this.state.client.request({
-        topic: this.state.session.topic,
-        chainId: DEFAULT_CHAIN_ID,
-        request: {
-          method: "signTypedData",
-          params,
-        },
-      });
-
-      // format displayed result
-      const formattedResult = {
-        method: "signTypedData",
-        address,
-        valid: true, // TODO: again, do we need to verify the signature via RPC server? Maybe not for the prototype
         result,
       };
 
@@ -417,9 +360,8 @@ class App extends React.Component<any, any> {
 
   public getNeoActions = (): AccountAction[] => {
     return [
-      { method: "sendTransaction", callback: this.testSendTransaction },
-      { method: "personal_sign", callback: this.testSignPersonalMessage },
-      { method: "signTypedData", callback: this.testSignTypedData },
+      { method: "getbestblockhash", callback: this.testGetBestBlockHash },
+      { method: "invokefunction", callback: this.testInvokeFunction },
     ];
   };
 

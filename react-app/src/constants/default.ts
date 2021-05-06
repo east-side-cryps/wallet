@@ -1,6 +1,6 @@
 export const DEFAULT_RELAY_PROVIDER = "wss://relay.walletconnect.org";
 
-export const DEFAULT_METHODS = ["sendTransaction", "personal_sign", "signTypedData"];
+export const DEFAULT_METHODS = ["getbestblockhash", "invokefunction"];
 
 export const DEFAULT_LOGGER = "debug";
 

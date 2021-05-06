@@ -1,6 +1,6 @@
 export const DEFAULT_RELAY_PROVIDER = "wss://relay.walletconnect.org";
 
-export const DEFAULT_METHODS = ["sendTransaction", "personal_sign", "signTypedData"];
+export const DEFAULT_METHODS = ["getbestblockhash", "invokefunction"];
 
 export const DEFAULT_LOGGER = "debug";
 
@@ -12,3 +12,6 @@ export const DEFAULT_APP_METADATA = {
 };
 
 export const DEFAULT_CHAIN_ID = "neo3:ihavenoidea";
+
+export const DEFAULT_NEO_NETWORK = "http://localhost:50012";
+export const DEFAULT_NEO_NETWORK_MAGIC = 1911028336;

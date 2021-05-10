@@ -13,5 +13,5 @@ export const DEFAULT_APP_METADATA = {
 
 export const DEFAULT_CHAIN_ID = "neo3:ihavenoidea";
 
-export const DEFAULT_NEO_NETWORK = "http://localhost:50012";
+export const DEFAULT_NEO_RPC_ADDRESS = "http://localhost:50012";
 export const DEFAULT_NEO_NETWORK_MAGIC = 1911028336;

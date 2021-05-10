@@ -21,7 +21,7 @@ import {
   DEFAULT_LOGGER,
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
-  DEFAULT_NEO_NETWORK,
+  DEFAULT_NEO_RPC_ADDRESS,
   DEFAULT_NEO_NETWORK_MAGIC,
 } from "./constants";
 import { Cards, isProposalCard, isRequestCard, isSessionCard, isSettingsCard } from "./helpers";
@@ -111,7 +111,7 @@ class App extends React.Component<{}> {
         storage,
       });
       const accounts = await this.getAccounts(storage)
-      const neonHelper = new NeonHelper(DEFAULT_NEO_NETWORK, DEFAULT_NEO_NETWORK_MAGIC);
+      const neonHelper = new NeonHelper(DEFAULT_NEO_RPC_ADDRESS, DEFAULT_NEO_NETWORK_MAGIC);
       this.setState({ loading: false, storage, wcClient, accounts, neonHelper });
       this.subscribeToEvents();
       await this.checkPersistedState();

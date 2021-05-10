@@ -15,6 +15,7 @@ const SAccount = styled.div<AccountStyleProps>`
   border-radius: 8px;
   padding: 8px;
   margin: 5px 0;
+  word-break: break-all;
   border: ${({ rgb }) => `2px solid rgb(${rgb})`};
   &.active {
     box-shadow: ${({ rgb }) => `0 0 8px rgb(${rgb})`};
@@ -55,7 +56,7 @@ const Blockchain = (props: BlockchainProps) => {
           <img src={chainMeta.logo} alt={chainMeta.name} />
           <p>{chainMeta.name}</p>
         </SChain>
-        {!!address && <p>{ellipseAddress(address)}</p>}
+        {address}
       </SAccount>
     </React.Fragment>
   );

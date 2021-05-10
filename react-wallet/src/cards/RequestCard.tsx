@@ -46,7 +46,7 @@ const getChainRequestRender = (request: JsonRpcRequest<any>) => {
             params.push({label: i.toString(10), value: p.toString()})
         } else {
             Object.keys(p).forEach((k: string) => {
-                params.push({label: k, value: p[k]})
+                params.push({label: `${i}[${k}]`, value: p[k]})
             })
         }
     })

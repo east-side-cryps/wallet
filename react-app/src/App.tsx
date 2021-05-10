@@ -316,7 +316,7 @@ class App extends React.Component<any, any> {
     }
   };
 
-  public testInvokeFunction = async () => {
+  public testInvokeFunctionHello = async () => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
@@ -358,10 +358,53 @@ class App extends React.Component<any, any> {
     }
   };
 
+  public testInvokeFunctionRegisterCandidate = async () => {
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
+    }
+    if (typeof this.state.session === "undefined") {
+      throw new Error("Session is not connected");
+    }
+
+    try {
+      const account = this.state.accounts[0]
+      const [address] = account.split("@")
+
+      // open modal
+      this.openRequestModal();
+
+      const scriptHash = "0xef4073a0f2b305a38ec4050e4d3d28bc40ea63f5"
+      const method = "balanceOf"
+
+      const result = await this.state.client.request({
+        topic: this.state.session.topic,
+        chainId: DEFAULT_CHAIN_ID,
+        request: {
+          method: "invokefunction",
+          params: [scriptHash, method, ['7353a523a06e5d2ca71e6dc958ed3b43d8b6e810']],
+        },
+      });
+
+      // format displayed result
+      const formattedResult = {
+        method: "invokefunction",
+        address,
+        result,
+      };
+
+      // display result
+      this.setState({ pending: false, result: formattedResult || null });
+    } catch (error) {
+      console.error(error);
+      this.setState({ pending: false, result: null });
+    }
+  };
+
   public getNeoActions = (): AccountAction[] => {
     return [
       { method: "getbestblockhash", callback: this.testGetBestBlockHash },
-      { method: "invokefunction", callback: this.testInvokeFunction },
+      { method: "invokefunction hello", callback: this.testInvokeFunctionHello },
+      { method: "invokefunction balanceOf", callback: this.testInvokeFunctionRegisterCandidate },
     ];
   };
 

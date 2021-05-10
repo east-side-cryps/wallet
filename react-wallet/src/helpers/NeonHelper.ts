@@ -3,12 +3,12 @@ import {Account} from '@cityofzion/neon-core/lib/wallet'
 import {JsonRpcRequest, JsonRpcResponse} from "@json-rpc-tools/utils";
 
 export class NeonHelper {
-    private readonly network: string
-    private readonly magic: number
+    private readonly rpcAddress: string
+    private readonly networkMagic: number
 
-    constructor(network: string, magic: number) {
-        this.network = network
-        this.magic = magic
+    constructor(rpcAddress: string, networkMagic: number) {
+        this.rpcAddress = rpcAddress
+        this.networkMagic = networkMagic
     }
 
     rpcCall = async (account: Account, request: JsonRpcRequest): Promise<JsonRpcResponse> => {
@@ -21,7 +21,7 @@ export class NeonHelper {
             result = await this.sendTransaction(account, request.params[0] as string, request.params[1] as string, 0, ...params);
         } else {
             const {jsonrpc, ...queryLike} = request
-            result = await new rpc.RPCClient(this.network).execute(Neon.create.query({...queryLike, jsonrpc: "2.0"}));
+            result = await new rpc.RPCClient(this.rpcAddress).execute(Neon.create.query({...queryLike, jsonrpc: "2.0"}));
         }
         return {
             id: request.id,
@@ -34,15 +34,25 @@ export class NeonHelper {
         const contract = new Neon.experimental.SmartContract(
             Neon.u.HexString.fromHex(scriptHash),
             {
-                networkMagic: this.magic,
-                rpcAddress: this.network,
+                networkMagic: this.networkMagic,
+                rpcAddress: this.rpcAddress,
                 account,
             }
         );
+        let testResp, resp
+        try {
+            testResp = await contract.testInvoke(operation, args)
+        } catch (e) {
+            console.log(e)
+            testResp = { error: {message: e.message, ...e} }
+        }
 
-        const testResp = await contract.testInvoke(operation, args)
-        console.log("TEST RESULT", testResp)
-        const resp = await contract.invoke(operation, args)
+        try {
+            resp = await contract.invoke(operation, args)
+        } catch (e) {
+            console.log(e)
+            resp = { error: {message: e.message, ...e} }
+        }
 
         return {
             testResp,

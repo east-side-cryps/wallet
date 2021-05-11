@@ -358,7 +358,7 @@ class App extends React.Component<any, any> {
     }
   };
 
-  public testInvokeFunctionRegisterCandidate = async () => {
+  public testInvokeFunctionBalanceOfGas = async () => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
@@ -373,15 +373,62 @@ class App extends React.Component<any, any> {
       // open modal
       this.openRequestModal();
 
-      const scriptHash = "0xef4073a0f2b305a38ec4050e4d3d28bc40ea63f5"
+      const scriptHash = "0xd2a4cff31913016155e38e474a2c06d08be276cf"
       const method = "balanceOf"
+      const addressParam = {type: "Address", value: address};
 
       const result = await this.state.client.request({
         topic: this.state.session.topic,
         chainId: DEFAULT_CHAIN_ID,
         request: {
           method: "invokefunction",
-          params: [scriptHash, method, ['7353a523a06e5d2ca71e6dc958ed3b43d8b6e810']],
+          params: [scriptHash, method, [addressParam]],
+        },
+      });
+
+      // format displayed result
+      const formattedResult = {
+        method: "invokefunction",
+        address,
+        result,
+      };
+
+      // display result
+      this.setState({ pending: false, result: formattedResult || null });
+    } catch (error) {
+      console.error(error);
+      this.setState({ pending: false, result: null });
+    }
+  };
+
+  public testInvokeFunctionTransferGas = async () => {
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
+    }
+    if (typeof this.state.session === "undefined") {
+      throw new Error("Session is not connected");
+    }
+
+    try {
+      const account = this.state.accounts[0]
+      const [address] = account.split("@")
+
+      // open modal
+      this.openRequestModal();
+
+      const scriptHash = "0xd2a4cff31913016155e38e474a2c06d08be276cf"
+      const method = "transfer"
+      const from = {type: "Address", value: address};
+      const to = {type: "Address", value: "NRnvbghHXdJkcMx9BHPqFeSjjGu4UriJ8Z"};
+      const value = {type: "Integer", value: 1};
+      const data = {type: "String", value: ""}
+
+      const result = await this.state.client.request({
+        topic: this.state.session.topic,
+        chainId: DEFAULT_CHAIN_ID,
+        request: {
+          method: "invokefunction",
+          params: [scriptHash, method, [from, to, value, data]],
         },
       });
 
@@ -404,7 +451,8 @@ class App extends React.Component<any, any> {
     return [
       { method: "getbestblockhash", callback: this.testGetBestBlockHash },
       { method: "invokefunction hello", callback: this.testInvokeFunctionHello },
-      { method: "invokefunction balanceOf", callback: this.testInvokeFunctionRegisterCandidate },
+      { method: "invokefunction balanceOf", callback: this.testInvokeFunctionBalanceOfGas },
+      { method: "invokefunction transfer", callback: this.testInvokeFunctionTransferGas },
     ];
   };
 

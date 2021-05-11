@@ -18,7 +18,7 @@ export class NeonHelper {
             if (request.params.length > 2) {
                 params = request.params[2]
             }
-            result = await this.sendTransaction(account, request.params[0] as string, request.params[1] as string, 0, ...params);
+            result = await this.sendTransaction(account, request.params[0] as string, request.params[1] as string, ...params);
         } else {
             const {jsonrpc, ...queryLike} = request
             result = await new rpc.RPCClient(this.rpcAddress).execute(Neon.create.query({...queryLike, jsonrpc: "2.0"}));
@@ -30,33 +30,30 @@ export class NeonHelper {
         }
     }
 
-    sendTransaction = async (account: Account, scriptHash: string, operation: string, gas: number, ...args: any[]) => {
-        const contract = new Neon.experimental.SmartContract(
-            Neon.u.HexString.fromHex(scriptHash),
-            {
-                networkMagic: this.networkMagic,
-                rpcAddress: this.rpcAddress,
-                account,
-            }
-        );
-        let testResp, resp
-        try {
-            testResp = await contract.testInvoke(operation, args)
-        } catch (e) {
-            console.log(e)
-            testResp = { error: {message: e.message, ...e} }
-        }
+    sendTransaction = async (account: Account, scriptHash: string, operation: string, ...args: any[]) => {
+        const convertedArgs = args.map(a => (
+            a.type === 'Address' && a.value !== undefined
+                ? sc.ContractParam.hash160(a.value)
+                : a))
 
+        const client = new rpc.RPCClient(this.rpcAddress);
+        let resp
         try {
-            resp = await contract.invoke(operation, args)
+            resp = await client.invokeFunction(
+                scriptHash,
+                operation,
+                convertedArgs,
+                [
+                    new tx.Signer({
+                        account: account.scriptHash,
+                        scopes: tx.WitnessScope.CalledByEntry,
+                    }),
+                ])
         } catch (e) {
             console.log(e)
             resp = { error: {message: e.message, ...e} }
         }
 
-        return {
-            testResp,
-            resp
-        }
+        return resp
     }
 }

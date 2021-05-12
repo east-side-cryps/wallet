@@ -289,6 +289,88 @@ class App extends React.Component<any, any> {
     }
   };
 
+  public testGetVersion = async () => {
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
+    }
+    if (typeof this.state.session === "undefined") {
+      throw new Error("Session is not connected");
+    }
+
+    try {
+      const account = this.state.accounts[0]
+      const [address] = account.split("@")
+
+      // open modal
+      this.openRequestModal();
+
+      const result = await this.state.client.request({
+        topic: this.state.session.topic,
+        chainId: DEFAULT_CHAIN_ID,
+        request: {
+          method: "getversion",
+          params: [],
+        },
+      });
+
+      // format displayed result
+      const formattedResult = {
+        method: "getversion",
+        address,
+        result,
+      };
+
+      // display result
+      this.setState({ pending: false, result: formattedResult || null });
+    } catch (error) {
+      console.error(error);
+      this.setState({ pending: false, result: null });
+    }
+  };
+
+  public testInvokeFunctionUserBalanceOf = async () => {
+    if (typeof this.state.client === "undefined") {
+      throw new Error("WalletConnect is not initialized");
+    }
+    if (typeof this.state.session === "undefined") {
+      throw new Error("Session is not connected");
+    }
+
+    try {
+      const account = this.state.accounts[0]
+      const [address] = account.split("@")
+
+      // open modal
+      this.openRequestModal();
+
+      const scriptHash = DEFAULT_GASTOKEN_SCRIPTHASH
+      const method = "balanceOf"
+      const from = {type: "Address", value: address};
+
+      const result = await this.state.client.request({
+        topic: this.state.session.topic,
+        chainId: DEFAULT_CHAIN_ID,
+        request: {
+          method: "invokefunction",
+          params: [scriptHash, method, [from]],
+        },
+      });
+
+      // format displayed result
+      const formattedResult = {
+        method: "invokefunction",
+        address,
+        result,
+      };
+
+      // display result
+      this.setState({ pending: false, result: formattedResult || null });
+    } catch (error) {
+      console.error(error);
+      this.setState({ pending: false, result: null });
+    }
+  };
+
   public testInvokeFunctionTransferGas = async () => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
@@ -337,8 +419,10 @@ class App extends React.Component<any, any> {
 
   public getNeoActions = (): AccountAction[] => {
     return [
+      { method: "get version", callback: this.testGetVersion },
       { method: "nep17 balances of destination", callback: this.testGetAccountState },
-      { method: "invokefunction transfer", callback: this.testInvokeFunctionTransferGas },
+      { method: "gas balance of user", callback: this.testInvokeFunctionUserBalanceOf },
+      { method: "transfer", callback: this.testInvokeFunctionTransferGas },
     ];
   };
 

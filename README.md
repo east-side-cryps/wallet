@@ -1,8 +1,6 @@
 # WalletConnect Proof of Concept
 The purpose of this repository is to test the functionalities around WalletConnect integration and be an implementation reference for future development.
 
-<div style="width:100%;height:0px;position:relative;padding-bottom:56.250%;"><iframe src="https://streamable.com/e/tf15wf?autoplay=1&nocontrols=1" frameborder="0" width="100%" height="100%" allowfullscreen allow="autoplay" style="width:100%;height:100%;position:absolute;left:0px;top:0px;overflow:hidden;"></iframe></div>
-
 [Demo Video](https://streamable.com/tf15wf)
 
 ## How does it work?

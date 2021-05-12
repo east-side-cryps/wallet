@@ -23,6 +23,7 @@ import {
   DEFAULT_RELAY_PROVIDER,
   DEFAULT_NEO_RPC_ADDRESS,
   DEFAULT_NEO_NETWORK_MAGIC,
+  DEFAULT_LOGGED_PRIVATEKEY
 } from "./constants";
 import { Cards, isProposalCard, isRequestCard, isSessionCard, isSettingsCard } from "./helpers";
 import {wallet} from "@cityofzion/neon-js";
@@ -126,7 +127,7 @@ class App extends React.Component<{}> {
     //   return []
     // }
     // const json = await storage.getItem<Partial<AccountJSON>>("account")
-    const account = new wallet.Account("bd52815561c4b7216277be94131ad53c9870299aebe6a1f5d4f34a85d95b03b9")
+    const account = new wallet.Account(DEFAULT_LOGGED_PRIVATEKEY)
     // if (!json) {
     //   await account.encrypt("mypassword")
     //   await storage.setItem("account", account.export())

@@ -17,12 +17,10 @@ import {
   DEFAULT_METHODS,
   DEFAULT_RELAY_PROVIDER,
   DEFAULT_CHAIN_ID,
+  DEFAULT_GASTOKEN_SCRIPTHASH,
+  DEFAULT_TRANSFER_DESTINATION_ACCOUNT,
 } from "./constants";
-import {
-  apiGetAccountAssets,
-  AccountAction,
-  AccountBalances,
-} from "./helpers";
+import {AccountAction} from "./helpers";
 import { fonts } from "./styles";
 import RequestModal from "./modals/RequestModal";
 import PairingModal from "./modals/PairingModal";
@@ -91,7 +89,6 @@ interface AppState {
   uri: string;
   accounts: string[]; // addresses
   result: any | undefined;
-  balances: AccountBalances;
 }
 
 const INITIAL_STATE: AppState = {
@@ -106,7 +103,6 @@ const INITIAL_STATE: AppState = {
   uri: "",
   accounts: [],
   result: undefined,
-  balances: {},
 };
 
 class App extends React.Component<any, any> {
@@ -234,29 +230,6 @@ class App extends React.Component<any, any> {
 
   public onSessionUpdate = async (accounts: string[]) => {
     this.setState({ accounts });
-    await this.getAccountBalances();
-  };
-
-  public getAccountBalances = async () => {
-    this.setState({ fetching: true });
-    try {
-      const arr = await Promise.all(
-        this.state.accounts.map(async account => {
-          const [address] = account.split("@");
-          const assets = await apiGetAccountAssets(address);
-          return { account, assets };
-        }),
-      );
-
-      const balances: AccountBalances = {};
-      arr.forEach(({ account, assets }) => {
-        balances[account] = assets;
-      });
-      this.setState({ fetching: false, balances });
-    } catch (error) {
-      console.error(error);
-      this.setState({ fetching: false });
-    }
   };
 
   public openPairingModal = () => this.setState({ modal: "pairing" });
@@ -277,7 +250,7 @@ class App extends React.Component<any, any> {
     this.connect();
   };
 
-  public testGetBestBlockHash = async () => {
+  public testGetAccountState = async () => {
     if (typeof this.state.client === "undefined") {
       throw new Error("WalletConnect is not initialized");
     }
@@ -296,99 +269,14 @@ class App extends React.Component<any, any> {
         topic: this.state.session.topic,
         chainId: DEFAULT_CHAIN_ID,
         request: {
-          method: "getbestblockhash",
-          params: [],
+          method: "getnep17balances",
+          params: [DEFAULT_TRANSFER_DESTINATION_ACCOUNT],
         },
       });
 
       // format displayed result
       const formattedResult = {
-        method: "getbestblockhash",
-        address,
-        result,
-      };
-
-      // display result
-      this.setState({ pending: false, result: formattedResult || null });
-    } catch (error) {
-      console.error(error);
-      this.setState({ pending: false, result: null });
-    }
-  };
-
-  public testInvokeFunctionHello = async () => {
-    if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
-    }
-    if (typeof this.state.session === "undefined") {
-      throw new Error("Session is not connected");
-    }
-
-    try {
-      const account = this.state.accounts[0]
-      const [address] = account.split("@")
-
-      // open modal
-      this.openRequestModal();
-
-      const scriptHash = "0xa4c049bb63f33bc268b4aa0384d1de56de8d9894"
-      const method = "hello"
-
-      const result = await this.state.client.request({
-        topic: this.state.session.topic,
-        chainId: DEFAULT_CHAIN_ID,
-        request: {
-          method: "invokefunction",
-          params: [scriptHash, method],
-        },
-      });
-
-      // format displayed result
-      const formattedResult = {
-        method: "invokefunction",
-        address,
-        result,
-      };
-
-      // display result
-      this.setState({ pending: false, result: formattedResult || null });
-    } catch (error) {
-      console.error(error);
-      this.setState({ pending: false, result: null });
-    }
-  };
-
-  public testInvokeFunctionBalanceOfGas = async () => {
-    if (typeof this.state.client === "undefined") {
-      throw new Error("WalletConnect is not initialized");
-    }
-    if (typeof this.state.session === "undefined") {
-      throw new Error("Session is not connected");
-    }
-
-    try {
-      const account = this.state.accounts[0]
-      const [address] = account.split("@")
-
-      // open modal
-      this.openRequestModal();
-
-      const scriptHash = "0xd2a4cff31913016155e38e474a2c06d08be276cf"
-      const method = "balanceOf"
-      const addressParam = {type: "Address", value: address};
-
-      const result = await this.state.client.request({
-        topic: this.state.session.topic,
-        chainId: DEFAULT_CHAIN_ID,
-        request: {
-          method: "invokefunction",
-          params: [scriptHash, method, [addressParam]],
-        },
-      });
-
-      // format displayed result
-      const formattedResult = {
-        method: "invokefunction",
+        method: "getnep17balances",
         address,
         result,
       };
@@ -416,11 +304,11 @@ class App extends React.Component<any, any> {
       // open modal
       this.openRequestModal();
 
-      const scriptHash = "0xd2a4cff31913016155e38e474a2c06d08be276cf"
+      const scriptHash = DEFAULT_GASTOKEN_SCRIPTHASH
       const method = "transfer"
       const from = {type: "Address", value: address};
-      const to = {type: "Address", value: "NRnvbghHXdJkcMx9BHPqFeSjjGu4UriJ8Z"};
-      const value = {type: "Integer", value: 1};
+      const to = {type: "Address", value: DEFAULT_TRANSFER_DESTINATION_ACCOUNT};
+      const value = {type: "Integer", value: 100000000};
       const data = {type: "String", value: ""}
 
       const result = await this.state.client.request({
@@ -449,9 +337,7 @@ class App extends React.Component<any, any> {
 
   public getNeoActions = (): AccountAction[] => {
     return [
-      { method: "getbestblockhash", callback: this.testGetBestBlockHash },
-      { method: "invokefunction hello", callback: this.testInvokeFunctionHello },
-      { method: "invokefunction balanceOf", callback: this.testInvokeFunctionBalanceOfGas },
+      { method: "nep17 balances of destination", callback: this.testGetAccountState },
       { method: "invokefunction transfer", callback: this.testInvokeFunctionTransferGas },
     ];
   };
@@ -471,8 +357,8 @@ class App extends React.Component<any, any> {
   };
 
   public renderContent = () => {
-    const { balances, accounts, fetching } = this.state;
-    return !accounts.length && !Object.keys(balances).length ? (
+    const { accounts, fetching } = this.state;
+    return !accounts.length ? (
       <SLanding center>
         <SConnectButton
           left
@@ -494,7 +380,6 @@ class App extends React.Component<any, any> {
                 active={true}
                 fetching={fetching}
                 address={address}
-                balances={balances}
                 actions={this.getNeoActions()}
               />
             );

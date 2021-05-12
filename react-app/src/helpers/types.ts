@@ -116,7 +116,3 @@ export interface AccountAction {
   method: string;
   callback: () => Promise<void>;
 }
-
-export interface AccountBalances {
-  [account: string]: AssetData[];
-}

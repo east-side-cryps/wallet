@@ -1,12 +1,11 @@
 import React, { PropsWithChildren, FC } from "react";
 import styled from "styled-components";
 
-import Asset from "./Asset";
 import Button from "./Button";
 import Column from "./Column";
 import Loader from "./Loader";
 
-import { AccountAction, ellipseAddress, AccountBalances, ChainMetadata } from "../helpers";
+import { AccountAction, ellipseAddress, ChainMetadata } from "../helpers";
 import { fonts } from "../styles";
 
 interface AccountStyleProps {
@@ -78,22 +77,19 @@ interface BlockchainProps {
   active?: boolean;
   address?: string;
   onClick?: () => void;
-  balances?: AccountBalances;
   actions?: AccountAction[];
 }
 
 const Blockchain: FC<PropsWithChildren<BlockchainProps>> = (
   props: PropsWithChildren<BlockchainProps>,
 ) => {
-  const { fetching, address, onClick, active, balances, actions } = props;
+  const { fetching, address, onClick, active, actions } = props;
   const chainMeta: ChainMetadata = {
     name: 'Neo3',
     logo: 'https://cryptologos.cc/logos/neo-neo-logo.svg',
     rgb: '#00e599'
   }
 
-  const assets =
-    typeof address !== "undefined" && typeof balances !== "undefined" ? balances[address] : [];
   return (
     <React.Fragment>
       <SAccount
@@ -115,16 +111,6 @@ const Blockchain: FC<PropsWithChildren<BlockchainProps>> = (
             </Column>
           ) : (
             <>
-              {!!assets && assets.length ? (
-                <SFullWidthContainer>
-                  <h6>Balances</h6>
-                  <Column center>
-                    {assets.map((asset) => (
-                      <Asset key={asset.symbol} asset={asset} />
-                    ))}
-                  </Column>
-                </SFullWidthContainer>
-              ) : null}
               {!!actions && actions.length ? (
                 <SFullWidthContainer>
                   <h6>Methods</h6>

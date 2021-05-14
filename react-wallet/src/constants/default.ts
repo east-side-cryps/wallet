@@ -15,5 +15,3 @@ export const DEFAULT_CHAIN_ID = "neo3:ihavenoidea";
 
 export const DEFAULT_NEO_RPC_ADDRESS = "https://testnet1.neo.coz.io"; // "http://localhost:50012";
 export const DEFAULT_NEO_NETWORK_MAGIC = 827601742; // 1911028336;
-
-export const DEFAULT_LOGGED_PRIVATEKEY = "bd52815561c4b7216277be94131ad53c9870299aebe6a1f5d4f34a85d95b03b9";

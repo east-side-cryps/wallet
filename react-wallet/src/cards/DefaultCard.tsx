@@ -60,6 +60,12 @@ const SInput = styled(Input)`
   height: 40px;
 `;
 
+const SRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 0.5rem;
+`;
+
 interface DefaultCardProps {
   accounts: string[];
   sessions: SessionTypes.Created[];
@@ -67,6 +73,8 @@ interface DefaultCardProps {
   openSession: (session: SessionTypes.Created) => void;
   openRequest: (requestEvent: SessionTypes.RequestEvent) => Promise<void>;
   openScanner: () => void;
+  exportAccount: () => void;
+  logout: () => void;
   onURI: (data: any) => void;
 }
 
@@ -78,6 +86,8 @@ const DefaultCard = (props: DefaultCardProps) => {
     openSession,
     openRequest,
     openScanner,
+    exportAccount,
+    logout,
     onURI,
   } = props;
   return (
@@ -89,11 +99,15 @@ const DefaultCard = (props: DefaultCardProps) => {
             {accounts.map(account => {
               const [address, chainId] = account.split("@");
               return (
-                <Blockchain
-                  key={`default:account:${account}`}
-                  chainId={chainId}
-                  address={address}
-                />
+                <>
+                  <Blockchain
+                    key={`default:account:${account}`}
+                    chainId={chainId}
+                    address={address}
+                  />
+                  <SButton onClick={exportAccount}>{`Export`}</SButton>
+                  <SButton onClick={logout}>{`Logout`}</SButton>
+                </>
               );
             })}
           </React.Fragment>

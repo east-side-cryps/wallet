@@ -5,6 +5,7 @@ import Client, { CLIENT_EVENTS } from "@walletconnect/client";
 import QRCodeModal from "@walletconnect/qrcode-modal";
 import { PairingTypes, SessionTypes } from "@walletconnect/types";
 import { ERROR, getAppMetadata, getError } from "@walletconnect/utils";
+import {ChakraProvider, Flex, IconButton, Link, Spacer, Text} from "@chakra-ui/react"
 import Blockchain from "./components/Blockchain";
 import Button from "./components/Button";
 import Column from "./components/Column";
@@ -24,58 +25,9 @@ import {AccountAction} from "./helpers";
 import { fonts } from "./styles";
 import RequestModal from "./modals/RequestModal";
 import PairingModal from "./modals/PairingModal";
-
-const SLayout = styled.div`
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  text-align: center;
-`;
-
-const SContent = styled(Wrapper as any)`
-  width: 100%;
-  height: 100%;
-  padding: 0 16px;
-`;
-
-const SLanding = styled(Column as any)`
-  /* height: 600px; */
-`;
-
-const SConnectButton = styled(Button as any)`
-  border-radius: 8px;
-  font-size: ${fonts.size.medium};
-  height: 44px;
-  width: 100%;
-  margin: 12px 0;
-`;
-
-const SAccountsContainer = styled(SLanding as any)`
-  height: 100%;
-  padding-bottom: 30px;
-  & h3 {
-    padding-top: 30px;
-  }
-`;
-
-const SFullWidthContainer = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-`;
-
-const SAccounts = styled(SFullWidthContainer)`
-  justify-content: space-between;
-  & > div {
-    margin: 12px 0;
-    flex: 1 0 100%;
-    @media (min-width: 648px) {
-      flex: 0 1 48%;
-    }
-  }
-`;
+import WaveIcon from "./components/icons/WaveIcon";
+import RadioIcon from "./components/icons/RadioIcon";
+import GHIcon from "./components/icons/GHIcon";
 
 interface AppState {
   client: Client | undefined;
@@ -440,51 +392,40 @@ class App extends React.Component<any, any> {
     }
   };
 
-  public renderContent = () => {
-    const { accounts, fetching } = this.state;
-    return !accounts.length ? (
-      <SLanding center>
-        <SConnectButton
-          left
-          onClick={this.onConnect}
-          fetching={fetching}
-        >
-          {"Connect"}
-        </SConnectButton>
-      </SLanding>
-    ) : (
-      <SAccountsContainer>
-        <h3>Accounts</h3>
-        <SAccounts>
-          {this.state.accounts.map(account => {
-            const [address] = account.split("@");
-            return (
-              <Blockchain
-                key={account}
-                active={true}
-                fetching={fetching}
-                address={address}
-                actions={this.getNeoActions()}
-              />
-            );
-          })}
-        </SAccounts>
-      </SAccountsContainer>
-    );
-  };
-
   public render = () => {
     const { loading, session, modal } = this.state;
     return (
-      <SLayout>
-        <Column maxWidth={1000} spanHeight>
-          <Header disconnect={this.disconnect} session={session} />
-          <SContent>{loading ? "Loading..." : this.renderContent()}</SContent>
-        </Column>
-        <Modal show={!!modal} closeModal={this.closeModal}>
-          {this.renderModal()}
-        </Modal>
-      </SLayout>
+      <ChakraProvider>
+        <Flex direction="column" width="100vw" minH="100vh">
+          <Flex align="center" height="7rem" borderBottom="4px" borderColor="#0094FF" padding="3.2rem">
+            <WaveIcon boxSize="3rem" mr="1rem" />
+            <Text color="#004e87" fontSize="2.8rem" fontWeight="bold">GasStream.io</Text>
+            <Spacer />
+            <Link fontSize="1.125rem">Connect your Wallet</Link>
+          </Flex>
+          <Flex direction="column" flex={1} backgroundColor="#edf7ff" align="center" backgroundImage="url(/sea.svg)" backgroundPosition="bottom" backgroundRepeat="repeat-x">
+            <Spacer />
+            <Text maxW="40rem" fontSize="2rem" textAlign="center" fontWeight="bold">If you want to securely pay someone a little bit at a time, Gas Stream is for you</Text>
+            <Spacer />
+            <Flex align="center" borderRadius="8px" backgroundColor="#0094ff" padding="1rem 2rem">
+              <RadioIcon boxSize="2.5rem" mr="1rem"/>
+              <Text color="white" fontSize="2rem" m={0}>Create a Stream</Text>
+            </Flex>
+            <Spacer />
+            <Spacer />
+            <Flex align="center" backgroundColor="#004e87" padding="2rem 3.25rem" w="100%">
+              <Text margin={0} color="white">Gas Stream was created by <Link color="#0094ff">@hal0x2823</Link>, <Link color="#0094ff">@melanke</Link> and <Link color="#0094ff">@yumiuehara</Link></Text>
+              <Spacer />
+              <Link color="white" margin={0}>
+                <Flex align="center">
+                  <GHIcon boxSize="1.5rem" mr="0.5rem"/>
+                  <Text fontSize="1.125rem" margin={0}>Fork it on Github</Text>
+                </Flex>
+              </Link>
+            </Flex>
+          </Flex>
+        </Flex>
+      </ChakraProvider>
     );
   };
 }

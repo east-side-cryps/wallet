@@ -398,7 +398,7 @@ class App extends React.Component<any, any> {
       <ChakraProvider>
         <Flex direction="column" width="100vw" minH="100vh">
           <Flex align="center" height="7rem" borderBottom="4px" borderColor="#0094FF" padding="3.2rem">
-            <WaveIcon boxSize="3rem" mr="1rem" />
+            <WaveIcon boxSize="3rem" mr="1rem" color="#004e87" />
             <Text color="#004e87" fontSize="2.8rem" fontWeight="bold">GasStream.io</Text>
             <Spacer />
             <Link fontSize="1.125rem">Connect your Wallet</Link>
@@ -408,7 +408,7 @@ class App extends React.Component<any, any> {
             <Text maxW="40rem" fontSize="2rem" textAlign="center" fontWeight="bold">If you want to securely pay someone a little bit at a time, Gas Stream is for you</Text>
             <Spacer />
             <Flex align="center" borderRadius="8px" backgroundColor="#0094ff" padding="1rem 2rem">
-              <RadioIcon boxSize="2.5rem" mr="1rem"/>
+              <RadioIcon color="white" boxSize="2.5rem" mr="1rem"/>
               <Text color="white" fontSize="2rem" m={0}>Create a Stream</Text>
             </Flex>
             <Spacer />

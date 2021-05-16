@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, {useContext, useEffect, useState} from "react";
 import Client, {CLIENT_EVENTS} from "@walletconnect/client";
 import {PairingTypes, SessionTypes} from "@walletconnect/types";
 import {
@@ -10,6 +10,7 @@ import {
 } from "../constants";
 import QRCodeModal from "@walletconnect/qrcode-modal";
 import {ERROR, getAppMetadata, getError} from "@walletconnect/utils";
+import {RequestArguments} from "@json-rpc-tools/types";
 
 interface IWalletConnectContext {
     wcClient: Client | undefined,
@@ -31,6 +32,7 @@ interface IWalletConnectContext {
 
     onConnect: () => Promise<void>,
     connect: (pairing?: { topic: string }) => Promise<void>,
+    rpcRequest: (request: RequestArguments) => Promise<void>,
 }
 
 export const WalletConnectContext = React.createContext<IWalletConnectContext | null>(null)
@@ -182,6 +184,44 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
         await connect()
     }
 
+    const rpcRequest = async (request: RequestArguments) => {
+        if (typeof wcClient === "undefined") {
+            throw new Error("WalletConnect is not initialized");
+        }
+        if (typeof session === "undefined") {
+            throw new Error("Session is not connected");
+        }
+
+        try {
+            const account = accounts[0]
+            const [address] = account.split("@")
+
+            // open modal
+            openRequestModal();
+
+            const result = await wcClient.request({
+                topic: session.topic,
+                chainId: DEFAULT_CHAIN_ID,
+                request,
+            });
+
+            // format displayed result
+            const formattedResult = {
+                method: request.method,
+                address,
+                result,
+            };
+
+            // display result
+            setPending(false)
+            setResult(formattedResult || null)
+        } catch (error) {
+            console.error(error);
+            setPending(false)
+            setResult(null)
+        }
+    };
+
     const contextValue = {
         wcClient,
         setWcClient,
@@ -202,9 +242,12 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
 
         onConnect,
         connect,
+        rpcRequest,
     }
 
     return (
         <WalletConnectContext.Provider value={contextValue}>{children}</WalletConnectContext.Provider>
     );
 }
+
+export const useWalletConnect = () => useContext(WalletConnectContext)

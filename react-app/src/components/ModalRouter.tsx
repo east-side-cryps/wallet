@@ -1,12 +1,11 @@
 import * as React from "react";
 import {Modal, ModalContent, ModalOverlay} from "@chakra-ui/react";
-import {useContext} from "react";
-import {WalletConnectContext} from "../context/WalletConnectContext";
+import {useWalletConnect} from "../context/WalletConnectContext";
 import PairingModal from "../modals/PairingModal";
 import RequestModal from "../modals/RequestModal";
 
 export default function ModalRouter () {
-  const walletConnectCtx = useContext(WalletConnectContext)
+  const walletConnectCtx = useWalletConnect()
 
   return (
       <Modal isOpen={!!walletConnectCtx?.modal} onClose={() => walletConnectCtx?.setModal("")}>

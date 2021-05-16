@@ -4,8 +4,7 @@ import Loader from "../components/Loader";
 import { STable, SRow, SKey, SValue } from "../components/shared";
 
 import { SModalParagraph } from "./shared";
-import {useContext} from "react";
-import {WalletConnectContext} from "../context/WalletConnectContext";
+import {useWalletConnect} from "../context/WalletConnectContext";
 import {ModalBody, ModalCloseButton, ModalHeader} from "@chakra-ui/react";
 
 const formatResultValue = (value: any) => {
@@ -17,7 +16,7 @@ const formatResultValue = (value: any) => {
 }
 
 export default function RequestModal() {
-  const walletConnectCtx = useContext(WalletConnectContext)
+  const walletConnectCtx = useWalletConnect()
 
   return (
     <>

@@ -1,12 +1,11 @@
 import * as React from "react";
 import WaveIcon from "./icons/WaveIcon";
 import {Flex, Link, Spacer, Spinner, Text} from "@chakra-ui/react";
-import {useContext} from "react";
-import {WalletConnectContext} from "../context/WalletConnectContext";
+import {useWalletConnect} from "../context/WalletConnectContext";
 import Blockchain from "./Blockchain";
 
 export default function Header () {
-  const walletConnectCtx = useContext(WalletConnectContext)
+  const walletConnectCtx = useWalletConnect()
 
   return (
       <Flex align="center" borderBottom="4px" borderColor="#0094FF" py="1rem" px={["1rem", "3rem"]}>

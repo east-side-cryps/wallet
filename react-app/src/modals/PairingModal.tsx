@@ -2,11 +2,10 @@ import * as React from "react";
 
 import Pairing from "../components/Pairing";
 import {Button, ModalBody, ModalCloseButton, ModalFooter, ModalHeader} from "@chakra-ui/react";
-import {useContext} from "react";
-import {WalletConnectContext} from "../context/WalletConnectContext";
+import {useWalletConnect} from "../context/WalletConnectContext";
 
 export default function PairingModal() {
-    const walletConnectCtx = useContext(WalletConnectContext)
+    const walletConnectCtx = useWalletConnect()
 
     return (
         <>

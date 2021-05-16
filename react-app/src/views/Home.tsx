@@ -1,11 +1,10 @@
-import React, {useContext} from "react";
 import {Box, Flex, Spacer, Text} from "@chakra-ui/react";
 import RadioIcon from "../components/icons/RadioIcon";
 import { Link } from "react-router-dom"
-import {WalletConnectContext} from "../context/WalletConnectContext";
+import {useWalletConnect} from "../context/WalletConnectContext";
 
 export default function Home() {
-    const walletConnectCtx = useContext(WalletConnectContext)
+    const walletConnectCtx = useWalletConnect()
 
     return (<>
         <Spacer/>

@@ -1,10 +1,9 @@
-import React, {useContext} from "react";
 import {Link, Spacer, Text} from "@chakra-ui/react";
 import WalletIcon from "../components/icons/WalletIcon";
-import {WalletConnectContext} from "../context/WalletConnectContext";
+import {useWalletConnect} from "../context/WalletConnectContext";
 
 export default function ConnectToProceed() {
-    const walletConnectCtx = useContext(WalletConnectContext)
+    const walletConnectCtx = useWalletConnect()
 
     return (<>
         <Spacer/>

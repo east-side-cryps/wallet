@@ -1,67 +1,39 @@
 import * as React from "react";
-import styled from "styled-components";
-import { SessionTypes } from "@walletconnect/types";
+import WaveIcon from "./icons/WaveIcon";
+import {Flex, Link, Spacer, Spinner, Text} from "@chakra-ui/react";
+import {useContext} from "react";
+import {WalletConnectContext} from "../context/WalletConnectContext";
+import Blockchain from "./Blockchain";
 
-import { fonts, responsive } from "../styles";
-import Button from "./Button";
+export default function Header () {
+  const walletConnectCtx = useContext(WalletConnectContext)
 
-const SHeader = styled.div`
-  margin-top: -1px;
-  margin-bottom: 1px;
-  width: 100%;
-  height: 100px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 16px;
-  @media screen and (${responsive.sm.max}) {
-    font-size: ${fonts.size.small};
-  }
-`;
-
-const SActiveAccount = styled.div`
-  display: flex;
-  align-items: center;
-  position: relative;
-  font-weight: 500;
-`;
-
-const SActiveSession = styled(SActiveAccount as any)`
-  flex-direction: column;
-  text-align: left;
-  align-items: flex-start;
-  & p {
-    font-size: 0.8em;
-    margin: 0;
-    padding: 0;
-  }
-  & p:nth-child(n + 2) {
-    font-weight: bold;
-  }
-`;
-
-interface HeaderProps {
-  disconnect: () => void;
-  session: SessionTypes.Created | undefined;
-}
-
-const Header = (props: HeaderProps) => {
-  const { disconnect, session } = props;
   return (
-    <SHeader {...props}>
-      {session ? (
-        <>
-          <SActiveSession>
-            <p>{`Connected to`}</p>
-            <p>{session.peer.metadata.name}</p>
-          </SActiveSession>
-          <Button outline color="red" onClick={disconnect}>
-            {"Disconnect"}
-          </Button>
-        </>
-      ) : null}
-    </SHeader>
+      <Flex align="center" borderBottom="4px" borderColor="#0094FF" py="1rem" px={["1rem", "3rem"]}>
+        <WaveIcon boxSize={["2rem", "2.5rem"]} mr={["0.3rem", "1rem"]} color="#004e87"/>
+        <Text color="#004e87" fontSize={["1.8rem", "2.2rem"]} fontWeight="bold" m={0}>
+          CrypSydra.com
+        </Text>
+        <Spacer/>
+          {!walletConnectCtx?.wcClient ? <Spinner /> : (
+              !walletConnectCtx?.session ? (
+                <Link fontSize={["0.9rem", "1.125rem"]} textAlign="right" m={0}
+                      onClick={walletConnectCtx?.onConnect}>Connect your Wallet</Link>
+              ) : (
+                  <Flex direction="column" align="right">
+                      <Text fontSize="0.5rem" m={0}>{walletConnectCtx.session.peer.metadata.name}</Text>
+                      {walletConnectCtx.accounts.map(account => {
+                          const [address] = account.split("@");
+                          return (
+                              <Blockchain
+                                  key={account}
+                                  address={address}
+                              />
+                          );
+                      })}
+                  </Flex>
+              )
+          )}
+      </Flex>
   );
-};
-
-export default Header;
+}

@@ -105,7 +105,6 @@ export interface ChainRequestRender {
 export interface ChainMetadata {
   name: string;
   logo: string;
-  rgb: string;
 }
 
 export interface NamespaceMetadata {

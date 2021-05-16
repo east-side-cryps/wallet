@@ -1,14 +1,12 @@
 import * as React from "react";
 
 import Loader from "../components/Loader";
-import { SContainer, STable, SRow, SKey, SValue } from "../components/shared";
+import { STable, SRow, SKey, SValue } from "../components/shared";
 
-import { SModalContainer, SModalTitle, SModalParagraph } from "./shared";
-
-interface RequestModalProps {
-  pending: boolean;
-  result: any;
-}
+import { SModalParagraph } from "./shared";
+import {useContext} from "react";
+import {WalletConnectContext} from "../context/WalletConnectContext";
+import {ModalBody, ModalCloseButton, ModalHeader} from "@chakra-ui/react";
 
 const formatResultValue = (value: any) => {
   if (typeof value === "object") {
@@ -18,39 +16,43 @@ const formatResultValue = (value: any) => {
   }
 }
 
-const RequestModal = (props: RequestModalProps) => {
-  const { pending, result } = props;
+export default function RequestModal() {
+  const walletConnectCtx = useContext(WalletConnectContext)
+
   return (
     <>
-      {pending ? (
-        <SModalContainer>
-          <SModalTitle>{"Pending JSON-RPC Request"}</SModalTitle>
-          <SContainer>
-            <Loader />
-            <SModalParagraph>{"Approve or reject request using your wallet"}</SModalParagraph>
-          </SContainer>
-        </SModalContainer>
-      ) : result ? (
-        <SModalContainer>
-          <SModalTitle>
-            {result.valid !== false ? "JSON-RPC Request Approved" : "JSON-RPC Request Failed"}
-          </SModalTitle>
-          <STable>
-            {Object.keys(result).map(key => (
-              <SRow key={key}>
-                <SKey>{key}</SKey>
-                <SValue>{formatResultValue(result[key])}</SValue>
-              </SRow>
-            ))}
-          </STable>
-        </SModalContainer>
+      {walletConnectCtx?.pending ? (
+          <>
+            <ModalHeader>{"Pending JSON-RPC Request"}</ModalHeader>
+            <ModalCloseButton/>
+            <ModalBody>
+              <Loader />
+              <SModalParagraph>{"Approve or reject request using your wallet"}</SModalParagraph>
+            </ModalBody>
+          </>
+      ) : walletConnectCtx?.result ? (
+        <>
+          <ModalHeader>
+            {walletConnectCtx.result.valid !== false ? "JSON-RPC Request Approved" : "JSON-RPC Request Failed"}
+          </ModalHeader>
+          <ModalCloseButton/>
+          <ModalBody>
+            <STable>
+              {Object.keys(walletConnectCtx.result).map(key => (
+                <SRow key={key}>
+                  <SKey>{key}</SKey>
+                  <SValue>{formatResultValue(walletConnectCtx.result[key])}</SValue>
+                </SRow>
+              ))}
+            </STable>
+          </ModalBody>
+        </>
       ) : (
-        <SModalContainer>
-          <SModalTitle>{"JSON-RPC Request Rejected"}</SModalTitle>
-        </SModalContainer>
+        <>
+          <ModalHeader>{"JSON-RPC Request Rejected"}</ModalHeader>
+          <ModalCloseButton/>
+        </>
       )}
     </>
   );
 };
-
-export default RequestModal;

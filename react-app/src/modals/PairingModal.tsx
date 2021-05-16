@@ -1,35 +1,30 @@
 import * as React from "react";
 
-import { PairingTypes } from "@walletconnect/types";
-
-import Button from "../components/Button";
 import Pairing from "../components/Pairing";
-import { STable } from "../components/shared";
+import {Button, ModalBody, ModalCloseButton, ModalFooter, ModalHeader} from "@chakra-ui/react";
+import {useContext} from "react";
+import {WalletConnectContext} from "../context/WalletConnectContext";
 
-import { SModalContainer, SModalTitle } from "./shared";
+export default function PairingModal() {
+    const walletConnectCtx = useContext(WalletConnectContext)
 
-interface PairingModalProps {
-  pairings: PairingTypes.Settled[];
-  connect: (pairing?: { topic: string }) => Promise<void>;
-}
+    return (
+        <>
+            <ModalHeader>Select available pairing or create new one</ModalHeader>
+            <ModalCloseButton/>
+            <ModalBody>
+                {walletConnectCtx?.wcClient?.pairing.values.map(pairing => (
+                    <Pairing
+                        key={pairing.topic}
+                        pairing={pairing}
+                        onClick={() => walletConnectCtx.connect({topic: pairing.topic})}
+                    />
+                ))}
+            </ModalBody>
 
-const PairingModal = (props: PairingModalProps) => {
-  const { pairings, connect } = props;
-  return (
-    <SModalContainer>
-      <SModalTitle>{"Select available pairing or create new one"}</SModalTitle>
-      <STable>
-        {pairings.map(pairing => (
-          <Pairing
-            key={pairing.topic}
-            pairing={pairing}
-            onClick={() => connect({ topic: pairing.topic })}
-          />
-        ))}
-      </STable>
-      <Button onClick={() => connect()}>{`New Pairing`}</Button>
-    </SModalContainer>
-  );
+            <ModalFooter>
+                <Button onClick={() => walletConnectCtx?.connect()}>{`New Pairing`}</Button>
+            </ModalFooter>
+        </>
+    );
 };
-
-export default PairingModal;

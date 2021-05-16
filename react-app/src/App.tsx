@@ -14,6 +14,7 @@ import Header from "./components/Header";
 import ModalRouter from "./components/ModalRouter";
 import ConnectToProceed from "./views/ConnectToProceed";
 import CreateStream from "./views/CreateStream";
+import StreamDetails from "./views/StreamDetails";
 
 export default function App() {
     return (
@@ -31,6 +32,9 @@ export default function App() {
                                 </Route>
                                 <Route path="/createStream">
                                     <CreateStream/>
+                                </Route>
+                                <Route path="/stream/:id">
+                                    <StreamDetails/>
                                 </Route>
                                 <Route path="/">
                                     <Home/>

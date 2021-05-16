@@ -16,6 +16,7 @@ interface IWalletConnectContext {
     wcClient: Client | undefined,
     setWcClient: React.Dispatch<React.SetStateAction<Client | undefined>>,
     session: SessionTypes.Created | undefined,
+    loadingSession: boolean,
     setSession: React.Dispatch<React.SetStateAction<SessionTypes.Created | undefined>>,
     pairings: string[],
     setPairings: React.Dispatch<React.SetStateAction<string[]>>,
@@ -32,7 +33,13 @@ interface IWalletConnectContext {
 
     onConnect: () => Promise<void>,
     connect: (pairing?: { topic: string }) => Promise<void>,
-    rpcRequest: (request: RequestArguments) => Promise<void>,
+    rpcRequest: (request: RequestArguments) => Promise<IRpcCallResult>,
+}
+
+interface IRpcCallResult {
+    method: string,
+    address: string,
+    result: any,
 }
 
 export const WalletConnectContext = React.createContext<IWalletConnectContext | null>(null)
@@ -40,6 +47,7 @@ export const WalletConnectContext = React.createContext<IWalletConnectContext | 
 export const WalletConnectContextProvider: React.FC = ({ children }) => {
     const [wcClient, setWcClient] = useState<Client | undefined>(undefined)
     const [session, setSession] = useState<SessionTypes.Created | undefined>(undefined)
+    const [loadingSession, setLoadingSession] = useState(true)
     const [pairings, setPairings] = useState<string[]>([])
     const [modal, setModal] = useState<string>("")
     const [pending, setPending] = useState<boolean>(false)
@@ -106,6 +114,7 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
             setAccounts(session.state.accounts)
             onSessionConnected(session)
         }
+        setLoadingSession(false)
     }
 
     const connect = async (pairing?: { topic: string }) => {
@@ -215,10 +224,11 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
             // display result
             setPending(false)
             setResult(formattedResult || null)
+            return formattedResult
         } catch (error) {
-            console.error(error);
             setPending(false)
             setResult(null)
+            throw error
         }
     };
 
@@ -227,6 +237,8 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
         setWcClient,
         session,
         setSession,
+        loadingSession,
+        setLoadingSession,
         pairings,
         setPairings,
         modal,

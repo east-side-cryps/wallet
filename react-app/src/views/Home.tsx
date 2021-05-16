@@ -1,11 +1,8 @@
 import {Box, Flex, Spacer, Text} from "@chakra-ui/react";
 import RadioIcon from "../components/icons/RadioIcon";
 import { Link } from "react-router-dom"
-import {useWalletConnect} from "../context/WalletConnectContext";
 
 export default function Home() {
-    const walletConnectCtx = useWalletConnect()
-
     return (<>
         <Spacer/>
         <Text maxW="44rem" color="#004e87" fontSize={["1.4rem", "2rem"]} textAlign="center"
@@ -15,7 +12,7 @@ export default function Home() {
         <Spacer/>
         <Box borderRadius="8px" backgroundColor="#0094ff" m="0.5rem"
              _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
-            <Link to={!walletConnectCtx?.session ? '/connectToProceed' : '/createStream'} color="white">
+            <Link to="/createStream" color="white">
                 <Flex align="center" p={["0.5rem 1rem", "1rem 2rem"]}>
                     <RadioIcon boxSize="2.5rem" mr="1rem"/>
                     <Text fontSize="2rem" m={0}>Create a Stream</Text>

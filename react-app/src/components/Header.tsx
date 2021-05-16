@@ -14,7 +14,7 @@ export default function Header () {
           CrypSydra.com
         </Text>
         <Spacer/>
-          {!walletConnectCtx?.wcClient ? <Spinner /> : (
+          {walletConnectCtx?.loadingSession ? <Spinner /> : (
               !walletConnectCtx?.session ? (
                 <Link fontSize={["0.9rem", "1.125rem"]} textAlign="right" m={0}
                       onClick={walletConnectCtx?.onConnect}>Connect your Wallet</Link>

@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useHistory} from "react-router-dom";
 import {
     Flex,
@@ -11,10 +11,14 @@ import {
     NumberInputStepper,
     NumberIncrementStepper,
     NumberDecrementStepper,
-    FormLabel, Button
+    FormLabel, Button, Spinner
 } from "@chakra-ui/react";
 import {useWalletConnect} from "../context/WalletConnectContext";
 import {stringify} from "querystring";
+import {DEFAULT_NEO_RPC_ADDRESS} from "../constants";
+import Neon, {rpc} from "@cityofzion/neon-js";
+import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
+import bs58check from "bs58check"
 
 const formControlStyle = {
     maxWidth: "35rem", marginBottom: "2rem"
@@ -38,9 +42,21 @@ export default function CreateStream() {
     const [totalAmountOfGas, setTotalAmountOfGas] = useState(0)
     const [startDatetime, setStartDatetime] = useState('')
     const [endDatetime, setEndDatetime] = useState('')
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        if (!walletConnectCtx?.loadingSession) {
+            if (!walletConnectCtx?.session) {
+                history.push('/connectToProceed')
+            } else {
+                setLoading(false)
+            }
+        }
+    }, [walletConnectCtx?.loadingSession, walletConnectCtx?.session])
 
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault()
+        setLoading(true)
         if (!walletConnectCtx) return
 
         const [senderAddress] = walletConnectCtx.accounts[0].split("@")
@@ -62,56 +78,85 @@ export default function CreateStream() {
             params: [gasScriptHash, 'transfer', [from, contract, value, args]],
         })
 
-        // TODO: wait for next block and retrieve the last submitted stream and redirect to it's detail page
-        alert(JSON.stringify(result, null, 2))
+        const rpcClient = new rpc.RPCClient(DEFAULT_NEO_RPC_ADDRESS)
+
+        // TODO: use Joe's websocket to create waitForTheNextBlock() - http://54.227.25.52:9009/
+        let appLog
+        do {
+            try {
+                await sleep(15000)
+                appLog = await rpcClient.getApplicationLog(result.result as string)
+            } catch (e) {}
+        } while (!appLog)
+
+        let streamId
+        appLog.executions.forEach(e => {
+            e.notifications.forEach(n => {
+                if (n.eventname === 'StreamCreated') {
+                    const hexstring = ((n.state.value as ContractParamJson[])[0].value as string)
+                    const json = atob(hexstring)
+                    const data = JSON.parse(json)
+                    streamId = data.id
+                }
+            })
+        })
+
+        setLoading(false)
+        history.push(`/stream/${streamId}`)
+    }
+
+    const sleep = (time: number) => {
+        return new Promise(resolve => {
+            setTimeout(resolve, time)
+        })
     }
 
     return (
-        <form onSubmit={handleSubmit} style={{width: '100%'}}>
-            <Flex direction="column" align="center">
-                <Text color="#004e87" fontWeight="bold" fontSize="2rem">Stream Registration</Text>
-                <FormControl style={formControlStyle} isRequired>
-                    <FormLabel style={formLabelStyle}>Recipient Address</FormLabel>
-                    <Input
-                        style={inputStyle}
-                        value={recipientAddress}
-                        onChange={(e) => setRecipientAddress(e.target.value)}/>
-                </FormControl>
-                <FormControl style={formControlStyle} isRequired>
-                    <FormLabel style={formLabelStyle}>Total Amount of Gas</FormLabel>
-                    <NumberInput
-                        value={totalAmountOfGas}
-                        onChange={(value) => setTotalAmountOfGas(Number(value))}>
-                        <NumberInputField style={inputStyle}/>
-                        <NumberInputStepper>
-                            <NumberIncrementStepper/>
-                            <NumberDecrementStepper/>
-                        </NumberInputStepper>
-                    </NumberInput>
-                </FormControl>
-                <FormControl style={formControlStyle}>
-                    <FormLabel style={formLabelStyle}>Start Datetime</FormLabel>
-                    <Input
-                        type="datetime-local"
-                        style={inputStyle}
-                        value={startDatetime}
-                        onChange={(e) => setStartDatetime(e.target.value)}/>
-                </FormControl>
-                <FormControl style={formControlStyle} isRequired>
-                    <FormLabel style={formLabelStyle}>End Datetime</FormLabel>
-                    <Input
-                        type="datetime-local"
-                        style={inputStyle}
-                        value={endDatetime}
-                        onChange={(e) => setEndDatetime(e.target.value)}/>
-                </FormControl>
-                <Button type="submit" w="100%" maxWidth="35rem" backgroundColor="#0094ff" textColor="white" fontSize="2rem" h="4rem"
-                        mb="2rem"
-                        _hover={{backgroundColor: '#0081dc'}}>
-                    Create
-                </Button>
-                <Spacer/>
-            </Flex>
-        </form>
+        <Flex as="form" onSubmit={handleSubmit} direction="column" align="center" flex="1" w="100%">
+            {loading ? <><Spacer/><Spinner /><Spacer/></> : (<>
+            <Text color="#004e87" fontWeight="bold" fontSize="2rem">Stream Registration</Text>
+            <FormControl style={formControlStyle} isRequired>
+                <FormLabel style={formLabelStyle}>Recipient Address</FormLabel>
+                <Input
+                    style={inputStyle}
+                    value={recipientAddress}
+                    onChange={(e) => setRecipientAddress(e.target.value)}/>
+            </FormControl>
+            <FormControl style={formControlStyle} isRequired>
+                <FormLabel style={formLabelStyle}>Total Amount of Gas</FormLabel>
+                <NumberInput
+                    value={totalAmountOfGas}
+                    onChange={(value) => setTotalAmountOfGas(Number(value))}>
+                    <NumberInputField style={inputStyle}/>
+                    <NumberInputStepper>
+                        <NumberIncrementStepper/>
+                        <NumberDecrementStepper/>
+                    </NumberInputStepper>
+                </NumberInput>
+            </FormControl>
+            <FormControl style={formControlStyle}>
+                <FormLabel style={formLabelStyle}>Start Datetime</FormLabel>
+                <Input
+                    type="datetime-local"
+                    style={inputStyle}
+                    value={startDatetime}
+                    onChange={(e) => setStartDatetime(e.target.value)}/>
+            </FormControl>
+            <FormControl style={formControlStyle} isRequired>
+                <FormLabel style={formLabelStyle}>End Datetime</FormLabel>
+                <Input
+                    type="datetime-local"
+                    style={inputStyle}
+                    value={endDatetime}
+                    onChange={(e) => setEndDatetime(e.target.value)}/>
+            </FormControl>
+            <Button type="submit" w="100%" maxWidth="35rem" backgroundColor="#0094ff" textColor="white" fontSize="2rem" h="4rem"
+                    mb="2rem"
+                    _hover={{backgroundColor: '#0081dc'}}>
+                Create
+            </Button>
+            <Spacer/>
+            </>)}
+        </Flex>
     )
 }

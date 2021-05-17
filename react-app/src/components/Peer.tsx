@@ -1,13 +1,12 @@
 import * as React from "react";
 import styled from "styled-components";
 import { AppMetadata } from "@walletconnect/types";
-import { colors, fonts } from "../styles";
 
 const SPeerOneLiner = styled.div`
   display: flex;
   align-items: center;
   border-radius: 8px;
-  border: 2px solid rgb(${colors.darkGrey});
+  border: 2px solid rgb(30, 30, 30);
   padding: 5px;
 
   & img {
@@ -26,7 +25,7 @@ const SPeerCard = styled.div`
   width: 100%;
   flex-direction: column;
   border-radius: 8px;
-  border: 2px solid rgb(${colors.darkGrey});
+  border: 2px solid rgb(30, 30, 30);
   padding: 5px;
   & > div {
     margin: 4px auto;
@@ -43,7 +42,7 @@ const SCenter = styled.div`
 `;
 
 const SUrl = styled(SCenter as any)`
-  font-size: ${fonts.size.small};
+  font-size: 1rem;
   opacity: 0.8;
 `;
 

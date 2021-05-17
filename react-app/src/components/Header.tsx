@@ -33,11 +33,11 @@ export default function Header() {
     return (
         <Flex align="center" borderBottom="4px" borderColor="#0094FF" py="1rem" px={["1rem", "3rem"]}>
             <WaveIcon boxSize={["2rem", "2.5rem"]} mr={["0.3rem", "1rem"]} color="#004e87"/>
-            <Text display={['none', 'block']} color="#004e87" fontSize="2.2rem" fontWeight="bold" m={0}>
+            <Text display={['none', 'block']} color="#004e87" fontSize="2.2rem" fontWeight="bold">
                 CrypSydra.com
             </Text>
             {!!id && (<>
-                <Text display={['none', 'block']} color="#0094ff" fontWeight="bold" fontSize="1.6rem" mb="0" mt="0.5rem"
+                <Text display={['none', 'block']} color="#0094ff" fontWeight="bold" fontSize="1.6rem" mt="0.5rem"
                       ml="0.5rem">/stream/{id}</Text>
                 <Link onClick={copyUrl} display={['none', 'block']}>
                     <CopyIcon boxSize="1.4rem" color="#333" ml="0.5rem" mt="0.5rem"/>
@@ -46,11 +46,11 @@ export default function Header() {
             <Spacer/>
             {walletConnectCtx?.loadingSession ? <Spinner/> : (
                 !walletConnectCtx?.session ? (
-                    <Link fontSize={["0.9rem", "1.125rem"]} textAlign="right" m={0}
+                    <Link fontSize={["0.9rem", "1.125rem"]} textAlign="right"
                           onClick={walletConnectCtx?.onConnect}>Connect your Wallet</Link>
                 ) : (
                     <Flex direction="column" align="right">
-                        <Text fontSize="0.5rem" m={0}>{walletConnectCtx.session.peer.metadata.name}</Text>
+                        <Text fontSize="0.5rem">{walletConnectCtx.session.peer.metadata.name}</Text>
                         {walletConnectCtx.accounts.map(account => {
                             const [address] = account.split("@");
                             return (

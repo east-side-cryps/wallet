@@ -15,7 +15,7 @@ export default function Home() {
             <Link to="/createStream" color="white">
                 <Flex align="center" p={["0.5rem 1rem", "1rem 2rem"]}>
                     <RadioIcon boxSize="2.5rem" mr="1rem"/>
-                    <Text fontSize="2rem" m={0}>Create a Stream</Text>
+                    <Text fontSize="2rem">Create a Stream</Text>
                 </Flex>
             </Link>
         </Box>

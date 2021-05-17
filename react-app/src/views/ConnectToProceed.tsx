@@ -27,7 +27,7 @@ export default function ConnectToProceed() {
                   textAlign="center"
                   _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}
                   onClick={walletConnectCtx?.onConnect}>
-                <Text fontSize="2rem" m={0}>Connect Wallet</Text>
+                <Text fontSize="2rem">Connect Wallet</Text>
             </Link>
             <Spacer/>
             <Spacer/>

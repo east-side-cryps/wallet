@@ -1,7 +1,5 @@
 import React from "react";
 import styled from "styled-components";
-
-import {ellipseAddress} from "../helpers";
 import {Flex, Image, Text} from "@chakra-ui/react";
 
 interface AccountStyleProps {
@@ -49,14 +47,18 @@ export default function Blockchain(props: BlockchainProps) {
         logo: 'https://cryptologos.cc/logos/neo-neo-logo.svg',
     }
 
+    const ellipseAddress = (address = "", width = 10) => {
+        return `${address.slice(0, width)}...${address.slice(-width)}`;
+    }
+
     return (
         <Flex
             onClick={() => onClick && onClick()}
         >
             <Image src={chainMeta.logo} alt={chainMeta.name} w="2rem" mr="0.5rem" />
             <Flex direction="column">
-                <Text fontWeight="bold" fontSize="0.8rem" m={0}>{chainMeta.name}</Text>
-                <Text fontSize="0.8rem" m={0}>{ellipseAddress(address, 6)}</Text>
+                <Text fontWeight="bold" fontSize="0.8rem">{chainMeta.name}</Text>
+                <Text fontSize="0.8rem">{ellipseAddress(address, 6)}</Text>
             </Flex>
         </Flex>
     )

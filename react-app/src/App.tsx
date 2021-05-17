@@ -42,16 +42,16 @@ export default function App() {
                             </Switch>
 
                             <Flex align="center" backgroundColor="#004e87" p={["1rem", "2rem 3.25rem"]} w="100%">
-                                <Text m={0} color="white">
+                                <Text color="white">
                                     Gas Stream was created
                                     by <Link color="#0094ff">@hal0x2823</Link>, <Link
                                     color="#0094ff">@melanke</Link> and <Link color="#0094ff">@yumiuehara</Link>
                                 </Text>
                                 <Spacer/>
-                                <Link color="white" m={0}>
+                                <Link color="white">
                                     <Flex align="center">
                                         <GHIcon boxSize="1.5rem" mr="0.5rem"/>
-                                        <Text fontSize="1.125rem" m={0}>Fork it on Github</Text>
+                                        <Text fontSize="1.125rem">Fork it on Github</Text>
                                     </Flex>
                                 </Link>
                             </Flex>

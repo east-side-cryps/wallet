@@ -131,7 +131,7 @@ export default function CreateStream() {
     return (
         <Flex as="form" onSubmit={handleSubmit} direction="column" align="center" flex="1" w="100%">
             {loading ? <><Spacer/><Spinner /><Spacer/></> : (<>
-            <Text color="#004e87" fontWeight="bold" fontSize="2rem">Stream Registration</Text>
+            <Text color="#004e87" fontWeight="bold" fontSize="2rem" m="2rem">Stream Registration</Text>
             <FormControl style={formControlStyle} isRequired>
                 <FormLabel style={formLabelStyle}>Recipient Address</FormLabel>
                 <Input

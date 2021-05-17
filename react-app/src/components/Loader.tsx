@@ -1,7 +1,6 @@
 import * as React from "react";
 import * as PropTypes from "prop-types";
 import styled, { keyframes } from "styled-components";
-import { colors } from "../styles";
 
 const load = keyframes`
   0% {
@@ -39,7 +38,7 @@ const SLoader = styled.svg<LoaderStyleProps>`
 
 const Loader = (props: LoaderProps) => {
   const { size, color } = props;
-  const rgb = props.rgb || `rgb(${colors[color]})`;
+  const rgb = props.rgb || 'rgb(24,125,203)';
   return (
     <SLoader viewBox="0 0 186 187" size={size}>
       <g stroke="none" strokeWidth="1" fill="none" fillRule="evenodd">

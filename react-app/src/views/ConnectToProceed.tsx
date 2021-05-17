@@ -1,7 +1,7 @@
 import {Link, Spacer, Spinner, Text} from "@chakra-ui/react";
 import WalletIcon from "../components/icons/WalletIcon";
 import {useWalletConnect} from "../context/WalletConnectContext";
-import React, {useEffect, useState} from "react";
+import React, {useEffect} from "react";
 import {useHistory} from "react-router-dom";
 
 export default function ConnectToProceed() {

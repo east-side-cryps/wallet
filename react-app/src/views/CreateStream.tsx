@@ -14,11 +14,9 @@ import {
     FormLabel, Button, Spinner
 } from "@chakra-ui/react";
 import {useWalletConnect} from "../context/WalletConnectContext";
-import {stringify} from "querystring";
-import {DEFAULT_NEO_RPC_ADDRESS} from "../constants";
-import Neon, {rpc} from "@cityofzion/neon-js";
+import {DEFAULT_NEO_RPC_ADDRESS, DEFAULT_SC_SCRIPTHASH} from "../constants";
+import {rpc} from "@cityofzion/neon-js";
 import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
-import bs58check from "bs58check"
 
 const formControlStyle = {
     maxWidth: "35rem", marginBottom: "2rem"
@@ -56,13 +54,28 @@ export default function CreateStream() {
 
     const handleSubmit = async (e: React.SyntheticEvent) => {
         e.preventDefault()
-        setLoading(true)
         if (!walletConnectCtx) return
+
+        setLoading(true)
+        const txId = await createStream()
+        if (!txId) return
+        const streamId = await getStreamIdFromTxId(txId)
+        if (!streamId) return
+        setLoading(false)
+        history.push(`/stream/${streamId}`)
+    }
+
+    const createStream = async () => {
+        if (!walletConnectCtx) return null
 
         const [senderAddress] = walletConnectCtx.accounts[0].split("@")
 
+        // we are using GasToken contract, calling the 'transfer' method.
+        // but we are transfering this gas to our smartcontract instead of a regular account
+        // the GasToken will call our smartcontract's 'onNEP17Payment' method
+        // the `args` variable represents the `data` parameter of 'onNEP17Payment'.
         const gasScriptHash = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
-        const contractScriptHash = '0x92ad91bf49a0b5916a7edeff132dce91dc58a3c1'
+        const contractScriptHash = DEFAULT_SC_SCRIPTHASH
         const from = {type: 'Address', value: senderAddress}
         const contract = {type: 'ScriptHash', value: contractScriptHash}
         const value = {type: 'Integer', value: totalAmountOfGas}
@@ -78,18 +91,23 @@ export default function CreateStream() {
             params: [gasScriptHash, 'transfer', [from, contract, value, args]],
         })
 
+        return result.result as string
+    }
+
+    const getStreamIdFromTxId = async (txId: string) => {
         const rpcClient = new rpc.RPCClient(DEFAULT_NEO_RPC_ADDRESS)
 
-        // TODO: use Joe's websocket to create waitForTheNextBlock() - http://54.227.25.52:9009/
+        // TODO: use Joe's websocket to create `await waitForTheNextBlock()` - http://54.227.25.52:9009/
         let appLog
         do {
             try {
-                await sleep(15000)
-                appLog = await rpcClient.getApplicationLog(result.result as string)
-            } catch (e) {}
+                appLog = await rpcClient.getApplicationLog(txId)
+            } catch (e) {
+                await sleep(5000)
+            }
         } while (!appLog)
 
-        let streamId
+        let streamId = null
         appLog.executions.forEach(e => {
             e.notifications.forEach(n => {
                 if (n.eventname === 'StreamCreated') {
@@ -101,8 +119,7 @@ export default function CreateStream() {
             })
         })
 
-        setLoading(false)
-        history.push(`/stream/${streamId}`)
+        return streamId
     }
 
     const sleep = (time: number) => {

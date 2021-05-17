@@ -4,7 +4,7 @@ import Loader from "../components/Loader";
 
 import { SModalParagraph } from "./shared";
 import {useWalletConnect} from "../context/WalletConnectContext";
-import {ModalBody, ModalCloseButton, ModalHeader} from "@chakra-ui/react";
+import {Flex, ModalBody, ModalCloseButton, ModalHeader} from "@chakra-ui/react";
 import {useEffect} from "react";
 
 export default function RequestModal() {
@@ -20,8 +20,10 @@ export default function RequestModal() {
       <ModalHeader>{"Pending JSON-RPC Request"}</ModalHeader>
       <ModalCloseButton/>
       <ModalBody>
-        <Loader />
-        <SModalParagraph>{"Approve or reject request using your wallet"}</SModalParagraph>
+          <Flex direction="column" align="center">
+            <Loader />
+            <SModalParagraph>{"Approve or reject request using your wallet"}</SModalParagraph>
+          </Flex>
       </ModalBody>
   </>)
 };

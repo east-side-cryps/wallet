@@ -32,6 +32,7 @@ interface IWalletConnectContext {
     onConnect: () => Promise<void>,
     connect: (pairing?: { topic: string }) => Promise<void>,
     rpcRequest: (request: RequestArguments) => Promise<IRpcCallResult>,
+    disconnect: () => Promise<void>,
 }
 
 interface IRpcCallResult {
@@ -247,6 +248,7 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
         onConnect,
         connect,
         rpcRequest,
+        disconnect,
     }
 
     return (

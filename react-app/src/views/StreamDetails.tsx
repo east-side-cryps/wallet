@@ -1,7 +1,7 @@
-import {Button, Link, Spacer, Spinner, Text, useToast, Flex, Box} from "@chakra-ui/react";
+import {Link, Spacer, Spinner, Text, useToast, Flex} from "@chakra-ui/react";
 import {useHistory, useParams} from "react-router-dom";
 import React, {useEffect, useState} from "react";
-import Neon, {rpc, sc, wallet} from "@cityofzion/neon-js";
+import Neon, {sc, wallet} from "@cityofzion/neon-js";
 import {
     DEFAULT_GAS_SCRIPTHASH,
     DEFAULT_NEO_NETWORK_MAGIC,

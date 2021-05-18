@@ -27,7 +27,7 @@ import {
 import {Cards, isProposalCard, isRequestCard, isSessionCard, isSettingsCard} from "./helpers";
 import {wallet} from "@cityofzion/neon-js";
 import {Account, AccountJSON} from "@cityofzion/neon-core/lib/wallet/Account";
-import {NeonHelper} from "./helpers/NeonHelper";
+import {N3Helper} from "./helpers/N3Helper";
 import Blockchain from "./components/Blockchain";
 import Button from "./components/Button";
 import Input from "./components/Input";
@@ -81,7 +81,7 @@ const SButton = styled(Button)`
 export interface AppState {
     wcClient: Client | undefined;
     storage: KeyValueStorage | undefined;
-    neonHelper: NeonHelper | undefined;
+    neonHelper: N3Helper | undefined;
     loading: boolean;
     scanner: boolean;
     chains: string[];
@@ -127,7 +127,7 @@ class App extends React.Component<{}> {
 
     public init = async () => {
         const storage = new KeyValueStorage();
-        const neonHelper = new NeonHelper(DEFAULT_NEO_RPC_ADDRESS, DEFAULT_NEO_NETWORK_MAGIC);
+        const neonHelper = new N3Helper(DEFAULT_NEO_RPC_ADDRESS, DEFAULT_NEO_NETWORK_MAGIC);
         this.setState({neonHelper, storage});
         await this.loadAccountFromStorage(storage)
     }
@@ -141,9 +141,9 @@ class App extends React.Component<{}> {
     public passwordOnAccount = async () => {
         if (this.state.accounts.length && this.state.accountPassword && this.state.storage) {
             const acc = this.state.accounts[0]
-            if (!acc.encrypted) {
+            try {
                 await acc.encrypt(this.state.accountPassword)
-            }
+            } catch (e) {}
             await this.state.storage.setItem("account", acc.export())
             await acc.decrypt(this.state.accountPassword)
             this.setState({accountDecripted: true})

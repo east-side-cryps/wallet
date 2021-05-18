@@ -20,10 +20,10 @@ interface IWalletConnectContext {
     setSession: React.Dispatch<React.SetStateAction<SessionTypes.Created | undefined>>,
     pairings: string[],
     setPairings: React.Dispatch<React.SetStateAction<string[]>>,
-    modal: string,
-    setModal: React.Dispatch<React.SetStateAction<string>>,
-    pending: boolean,
-    setPending: React.Dispatch<React.SetStateAction<boolean>>,
+    isPairing: boolean,
+    setIsPairing: React.Dispatch<React.SetStateAction<boolean>>,
+    isPendingApproval: boolean,
+    setIsPendingApproval: React.Dispatch<React.SetStateAction<boolean>>,
     uri: string,
     setUri: React.Dispatch<React.SetStateAction<string>>,
     accounts: string[],
@@ -49,9 +49,9 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
     const [session, setSession] = useState<SessionTypes.Created | undefined>(undefined)
     const [loadingSession, setLoadingSession] = useState(true)
     const [pairings, setPairings] = useState<string[]>([])
-    const [modal, setModal] = useState<string>("")
-    const [pending, setPending] = useState<boolean>(false)
-    const [uri, setUri] = useState<string>("")
+    const [isPairing, setIsPairing] = useState(false)
+    const [isPendingApproval, setIsPendingApproval] = useState(false)
+    const [uri, setUri] = useState("")
     const [accounts, setAccounts] = useState<string[]>([])
     const [result, setResult] = useState<any | undefined>(undefined)
 
@@ -121,9 +121,9 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
         if (typeof wcClient === "undefined") {
             throw new Error("WalletConnect is not initialized")
         }
-        if (modal === "pairing") {
-            closeModal()
-        }
+
+        setIsPairing(false)
+
         try {
             const session = await wcClient.connect({
                 metadata: getAppMetadata() || DEFAULT_APP_METADATA,
@@ -173,22 +173,14 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
         setAccounts(accounts)
     }
 
-    const openPairingModal = () => setModal("pairing")
-
-    const openRequestModal = () => {
-        setPending(true)
-        setModal("request")
-    }
-
-    const closeModal = () => setModal("")
-
     const onConnect = async () => {
         console.log('ON CONNECT')
         if (typeof wcClient === "undefined") {
             throw new Error("WalletConnect is not initialized")
         }
         if (wcClient.pairing.topics.length) {
-            return openPairingModal()
+            setIsPairing(true)
+            return
         }
         await connect()
     }
@@ -206,7 +198,7 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
             const [address] = account.split("@")
 
             // open modal
-            openRequestModal();
+            setIsPendingApproval(true)
 
             const result = await wcClient.request({
                 topic: session.topic,
@@ -222,11 +214,11 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
             };
 
             // display result
-            setPending(false)
+            setIsPendingApproval(false)
             setResult(formattedResult || null)
             return formattedResult
         } catch (error) {
-            setPending(false)
+            setIsPendingApproval(false)
             setResult(null)
             throw error
         }
@@ -241,10 +233,10 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
         setLoadingSession,
         pairings,
         setPairings,
-        modal,
-        setModal,
-        pending,
-        setPending,
+        isPairing,
+        setIsPairing,
+        isPendingApproval,
+        setIsPendingApproval,
         uri,
         setUri,
         accounts,

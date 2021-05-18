@@ -13,6 +13,12 @@ export const DEFAULT_APP_METADATA = {
 
 export const DEFAULT_CHAIN_ID = "neo3:ihavenoidea";
 
-export const DEFAULT_NEO_RPC_ADDRESS = "https://testnet1.neo.coz.io"; // "http://localhost:50012";
-export const DEFAULT_NEO_NETWORK_MAGIC = 827601742; // 1911028336;
-export const DEFAULT_SC_SCRIPTHASH = "0x92ad91bf49a0b5916a7edeff132dce91dc58a3c1";
+export const DEFAULT_GAS_SCRIPTHASH = "0xd2a4cff31913016155e38e474a2c06d08be276cf";
+
+export const DEFAULT_NEO_RPC_ADDRESS = "https://testnet1.neo.coz.io:443";
+export const DEFAULT_NEO_NETWORK_MAGIC = 844378958;
+export const DEFAULT_SC_SCRIPTHASH = "0x89768714998d076003e84b60c150b6e97bbafa3c";
+
+// export const DEFAULT_NEO_RPC_ADDRESS = "http://localhost:50012";
+// export const DEFAULT_NEO_NETWORK_MAGIC = 1911028336;
+// export const DEFAULT_SC_SCRIPTHASH = "0xcdccc13231298b3f3c8f19906f92b494a29ffb9f";

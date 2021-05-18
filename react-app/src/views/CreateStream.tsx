@@ -11,12 +11,18 @@ import {
     NumberInputStepper,
     NumberIncrementStepper,
     NumberDecrementStepper,
-    FormLabel, Button, Spinner
+    FormLabel, Button, Spinner, useToast
 } from "@chakra-ui/react";
 import {useWalletConnect} from "../context/WalletConnectContext";
-import {DEFAULT_NEO_RPC_ADDRESS, DEFAULT_SC_SCRIPTHASH} from "../constants";
+import {
+    DEFAULT_GAS_SCRIPTHASH,
+    DEFAULT_NEO_NETWORK_MAGIC,
+    DEFAULT_NEO_RPC_ADDRESS,
+    DEFAULT_SC_SCRIPTHASH
+} from "../constants";
 import {rpc} from "@cityofzion/neon-js";
 import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
+import {N3Helper} from "../helpers/N3Helper";
 
 const formControlStyle = {
     maxWidth: "35rem", marginBottom: "2rem"
@@ -35,6 +41,9 @@ const inputStyle = {
 export default function CreateStream() {
     const walletConnectCtx = useWalletConnect()
     const history = useHistory()
+    const toast = useToast()
+
+    const n3Helper = new N3Helper(DEFAULT_NEO_RPC_ADDRESS, DEFAULT_NEO_NETWORK_MAGIC)
 
     const [recipientAddress, setRecipientAddress] = useState('')
     const [totalAmountOfGas, setTotalAmountOfGas] = useState(0)
@@ -56,13 +65,18 @@ export default function CreateStream() {
         e.preventDefault()
         if (!walletConnectCtx) return
 
-        setLoading(true)
         const txId = await createStream()
         if (!txId) return
-        const streamId = await getStreamIdFromTxId(txId)
-        if (!streamId) return
+        setLoading(true)
+        const notification = (await n3Helper.getNotificationsFromTxId(txId))
+            .find(n => n.contract === DEFAULT_SC_SCRIPTHASH && n.eventname === 'StreamCreated')
+        if (!notification) return
+        const hexstring = ((notification.state.value as ContractParamJson[])[0].value as string)
+        const json = atob(hexstring)
+        const data = JSON.parse(json)
+        if (!data) return
         setLoading(false)
-        history.push(`/stream/${streamId}`)
+        history.push(`/stream/${data.id}`)
     }
 
     const createStream = async () => {
@@ -74,7 +88,7 @@ export default function CreateStream() {
         // but we are transfering this gas to our smartcontract instead of a regular account
         // the GasToken will call our smartcontract's 'onNEP17Payment' method
         // the `args` variable represents the `data` parameter of 'onNEP17Payment'.
-        const gasScriptHash = '0xd2a4cff31913016155e38e474a2c06d08be276cf'
+        const gasScriptHash = DEFAULT_GAS_SCRIPTHASH
         const contractScriptHash = DEFAULT_SC_SCRIPTHASH
         const from = {type: 'Address', value: senderAddress}
         const contract = {type: 'ScriptHash', value: contractScriptHash}
@@ -86,46 +100,22 @@ export default function CreateStream() {
         const endTime = {type: 'Integer', value: new Date(endDatetime).getTime() }
         const args = {type: 'Array', value: [contractMethod, to, startTime, endTime]}
 
-        const result = await walletConnectCtx.rpcRequest({
+        const resp = await walletConnectCtx.rpcRequest({
             method: 'invokefunction',
             params: [gasScriptHash, 'transfer', [from, contract, value, args]],
         })
 
-        return result.result as string
-    }
-
-    const getStreamIdFromTxId = async (txId: string) => {
-        const rpcClient = new rpc.RPCClient(DEFAULT_NEO_RPC_ADDRESS)
-
-        // TODO: use Joe's websocket to create `await waitForTheNextBlock()` - http://54.227.25.52:9009/
-        let appLog
-        do {
-            try {
-                appLog = await rpcClient.getApplicationLog(txId)
-            } catch (e) {
-                await sleep(5000)
-            }
-        } while (!appLog)
-
-        let streamId = null
-        appLog.executions.forEach(e => {
-            e.notifications.forEach(n => {
-                if (n.eventname === 'StreamCreated') {
-                    const hexstring = ((n.state.value as ContractParamJson[])[0].value as string)
-                    const json = atob(hexstring)
-                    const data = JSON.parse(json)
-                    streamId = data.id
-                }
+        if (resp.result.error && resp.result.error.message) {
+            toast({
+                title: resp.result.error.message,
+                status: "error",
+                duration: 10000,
+                isClosable: true,
             })
-        })
+            return null
+        }
 
-        return streamId
-    }
-
-    const sleep = (time: number) => {
-        return new Promise(resolve => {
-            setTimeout(resolve, time)
-        })
+        return resp.result as string
     }
 
     return (

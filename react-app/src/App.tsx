@@ -11,10 +11,11 @@ import GHIcon from "./components/icons/GHIcon"
 import Home from "./views/Home"
 import {WalletConnectContextProvider} from "./context/WalletConnectContext";
 import Header from "./components/Header";
-import ModalRouter from "./components/ModalRouter";
 import ConnectToProceed from "./views/ConnectToProceed";
 import CreateStream from "./views/CreateStream";
 import StreamDetails from "./views/StreamDetails";
+import PairingModal from "./components/modals/PairingModal";
+import RequestModal from "./components/modals/RequestModal";
 
 export default function App() {
     return (
@@ -57,7 +58,8 @@ export default function App() {
                             </Flex>
                         </Flex>
                     </Flex>
-                    <ModalRouter />
+                    <PairingModal />
+                    <RequestModal />
                 </Router>
             </WalletConnectContextProvider>
         </ChakraProvider>

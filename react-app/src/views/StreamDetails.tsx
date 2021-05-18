@@ -257,7 +257,7 @@ export default function StreamDetails() {
     return (<>
         {loading ? <><Spacer/><Spinner/><Spacer/></> : (<>
             <Spacer/>
-            <Flex direction="column" w="60rem" fontWeight="bold" fontSize="0.875rem" color="#004e87">
+            <Flex direction="column" w="100%" maxW="60rem" fontWeight="bold" fontSize="0.875rem" color="#004e87" px="0.5rem">
                 <Flex mb="0.5rem">
                     <Flex direction="column">
                         <Text fontSize="1.5rem">{withdrawnValue()}</Text>
@@ -274,7 +274,7 @@ export default function StreamDetails() {
                         <Text>Gas Total</Text>
                     </Flex>
                 </Flex>
-                <Flex bg="white" w="60rem" h="3rem" borderRadius="6.25rem" overflow="hidden">
+                <Flex bg="white" h="3rem" borderRadius="6.25rem" overflow="hidden">
                     <Flex bg="#0094ff" w={streamedPctFormatted()} h="3rem" borderRadius="6.25rem">
                         <Text bg="#004e87" w={withdrawnPctFormatted()} h="3rem" lineHeight="3rem" borderRadius="6.25rem"
                               textAlign="right" color="white" pr="0.8rem">
@@ -287,31 +287,33 @@ export default function StreamDetails() {
                 <Flex mt="0.5rem">
                     <Text>Started at {startFormatted()}</Text>
                     <Spacer/>
-                    <Text>Ends at {endFormatted()}</Text>
+                    <Text textAlign="right">Ends at {endFormatted()}</Text>
                 </Flex>
             </Flex>
             <Spacer/>
-            <Text color="#004e87" fontSize="2rem" fontWeight="bold" textAlign="center">{countdown}</Text>
+            <Text color="#004e87" fontSize="2rem" fontWeight="bold" textAlign="center" mx="1rem">{countdown}</Text>
             <Spacer/>
-            <Link onClick={() => setWithdrawOpen(true)} color="white" borderRadius="0.5rem" bg="#0094ff" m="0.5rem"
-                  p={["0.5rem 1rem", "0.8rem 12rem"]}
-                  textAlign="center"
-                  _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
-                <Text fontSize="2rem" m={0}>Withdraw</Text>
-            </Link>
-            <Flex>
-                <Link onClick={share} color="#0094ff" borderRadius="0.5rem" bg="white" m="0.5rem"
-                      p={["0.5rem 1rem", "0.8rem 5rem"]}
-                      textAlign="center"
-                      _hover={{textDecoration: 'none', backgroundColor: 'gray.100'}}>
-                    <Text fontSize="2rem" m={0}>Share</Text>
-                </Link>
-                <Link onClick={cancelStream} color="white" borderRadius="0.5rem" bg="#004e87" m="0.5rem"
-                      p={["0.5rem 1rem", "0.8rem 2rem"]}
+            <Flex direction="column" w="100%" maxW="26rem" px="1rem">
+                <Link onClick={() => setWithdrawOpen(true)} color="white" borderRadius="0.5rem" bg="#0094ff" mb="1rem"
+                      p={["0.4rem", "0.6rem"]}
                       textAlign="center"
                       _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
-                    <Text fontSize="2rem" m={0}>Cancel Stream</Text>
+                    <Text fontSize="1.6rem" m={0}>Withdraw</Text>
                 </Link>
+                <Flex>
+                    <Link onClick={share} color="#0094ff" borderRadius="0.5rem" bg="white" mr="1rem"
+                          flex="1" p={["0.4rem", "0.6rem"]}
+                          textAlign="center"
+                          _hover={{textDecoration: 'none', backgroundColor: 'gray.100'}}>
+                        <Text fontSize="1.6rem" m={0}>Share</Text>
+                    </Link>
+                    <Link onClick={cancelStream} color="white" borderRadius="0.5rem" bg="#004e87"
+                          flex="1" w="12rem" p={["0.4rem", "0.6rem"]}
+                          textAlign="center"
+                          _hover={{textDecoration: 'none', backgroundColor: '#550033'}}>
+                        <Text fontSize="1.6rem" m={0}>Cancel Stream</Text>
+                    </Link>
+                </Flex>
             </Flex>
             <Spacer/>
             <WithdrawModal isOpen={withdrawOpen} onClose={withdraw}/>

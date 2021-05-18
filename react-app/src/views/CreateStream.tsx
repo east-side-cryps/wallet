@@ -20,7 +20,6 @@ import {
     DEFAULT_NEO_RPC_ADDRESS,
     DEFAULT_SC_SCRIPTHASH
 } from "../constants";
-import {rpc} from "@cityofzion/neon-js";
 import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
 import {N3Helper} from "../helpers/N3Helper";
 
@@ -119,7 +118,7 @@ export default function CreateStream() {
     }
 
     return (
-        <Flex as="form" onSubmit={handleSubmit} direction="column" align="center" flex="1" w="100%">
+        <Flex as="form" onSubmit={handleSubmit} direction="column" align="center" flex="1" w="100%" px="0.5rem">
             {loading ? <><Spacer/><Spinner /><Spacer/></> : (<>
             <Text color="#004e87" fontWeight="bold" fontSize="2rem" m="2rem">Stream Registration</Text>
             <FormControl style={formControlStyle} isRequired>

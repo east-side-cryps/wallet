@@ -3,7 +3,7 @@ import WaveIcon from "./icons/WaveIcon";
 import {Flex, Link, Spacer, Spinner, Text, useToast} from "@chakra-ui/react";
 import {useWalletConnect} from "../context/WalletConnectContext";
 import Blockchain from "./Blockchain";
-import {matchPath, useLocation} from "react-router-dom";
+import {matchPath, useLocation, Link as RLink} from "react-router-dom";
 import CopyIcon from "./icons/CopyIcon";
 import copy from "clipboard-copy";
 import {useEffect, useState} from "react";
@@ -32,10 +32,14 @@ export default function Header() {
 
     return (
         <Flex align="center" borderBottom="4px" borderColor="#0094FF" py="1rem" px={["1rem", "3rem"]}>
-            <WaveIcon boxSize={["2rem", "2.5rem"]} mr={["0.3rem", "1rem"]} color="#004e87"/>
-            <Text display={['none', 'block']} color="#004e87" fontSize="2.2rem" fontWeight="bold">
-                CrypSydra.com
-            </Text>
+            <RLink to="/">
+                <Flex align="center">
+                    <WaveIcon boxSize={["2rem", "2.5rem"]} mr={["0.3rem", "1rem"]} color="#004e87"/>
+                    <Text display={['none', 'block']} color="#004e87" fontSize="2.2rem" fontWeight="bold">
+                        CrypSydra.com
+                    </Text>
+                </Flex>
+            </RLink>
             {!!id && (<>
                 <Text display={['none', 'block']} color="#0094ff" fontWeight="bold" fontSize="1.6rem" mt="0.5rem"
                       ml="0.5rem">/stream/{id}</Text>

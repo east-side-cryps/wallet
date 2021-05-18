@@ -1,10 +1,5 @@
 import React from "react";
-import styled from "styled-components";
 import {Flex, Image, Text} from "@chakra-ui/react";
-
-interface AccountStyleProps {
-    rgb: string;
-}
 
 interface BlockchainProps {
     address?: string;

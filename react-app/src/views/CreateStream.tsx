@@ -58,6 +58,7 @@ export default function CreateStream() {
                 setLoading(false)
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [walletConnectCtx?.loadingSession, walletConnectCtx?.session])
 
     const handleSubmit = async (e: React.SyntheticEvent) => {

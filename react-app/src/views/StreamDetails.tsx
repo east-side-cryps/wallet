@@ -70,10 +70,12 @@ export default function StreamDetails() {
 
     useEffect(() => {
         loadStream()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     useEffect(() => {
         updateCountDown()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stream, countdown])
 
     const withdrawnValue = () => {

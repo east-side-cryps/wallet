@@ -14,6 +14,7 @@ export default function ConnectToProceed() {
                 history.goBack()
             }
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [walletConnectCtx?.loadingSession, walletConnectCtx?.session])
 
     return (<>

@@ -5,9 +5,9 @@ export const DEFAULT_METHODS = ["getversion", "getnep17balances", "invokefunctio
 export const DEFAULT_LOGGER = "debug";
 
 export const DEFAULT_APP_METADATA = {
-  name: "CoZ dApp Prototype",
+  name: "CrypSydra",
   description: "WalletConnect integration Prototype",
-  url: "https://coz.io/",
+  url: "https://crypsydra.vercel.app/",
   icons: ["https://raw.githubusercontent.com/CityOfZion/visual-identity/develop/_CoZ%20Branding/_Logo/_Logo%20icon/_PNG%20200x178px/CoZ_Icon_DARKBLUE_200x178px.png"],
 };
 

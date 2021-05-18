@@ -28,8 +28,6 @@ interface IWalletConnectContext {
     setUri: React.Dispatch<React.SetStateAction<string>>,
     accounts: string[],
     setAccounts: React.Dispatch<React.SetStateAction<string[]>>,
-    result: any | undefined,
-    setResult: React.Dispatch<React.SetStateAction<any | undefined>>,
 
     onConnect: () => Promise<void>,
     connect: (pairing?: { topic: string }) => Promise<void>,
@@ -53,7 +51,6 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
     const [isPendingApproval, setIsPendingApproval] = useState(false)
     const [uri, setUri] = useState("")
     const [accounts, setAccounts] = useState<string[]>([])
-    const [result, setResult] = useState<any | undefined>(undefined)
 
     useEffect(() => {
         initWcClient()
@@ -193,9 +190,10 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
             throw new Error("Session is not connected");
         }
 
+        const account = accounts[0]
+        const [address] = account.split("@")
+
         try {
-            const account = accounts[0]
-            const [address] = account.split("@")
 
             // open modal
             setIsPendingApproval(true)
@@ -215,12 +213,16 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
 
             // display result
             setIsPendingApproval(false)
-            setResult(formattedResult || null)
             return formattedResult
         } catch (error) {
             setIsPendingApproval(false)
-            setResult(null)
-            throw error
+            return {
+                method: request.method,
+                address,
+                result: {
+                    error,
+                },
+            }
         }
     };
 
@@ -241,8 +243,6 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
         setUri,
         accounts,
         setAccounts,
-        result,
-        setResult,
 
         onConnect,
         connect,

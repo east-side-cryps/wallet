@@ -1,4 +1,4 @@
-import {Button, Link, Spacer, Spinner, Text, useToast} from "@chakra-ui/react";
+import {Button, Link, Spacer, Spinner, Text, useToast, Flex, Box} from "@chakra-ui/react";
 import {useParams} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import Neon, {rpc, sc, wallet} from "@cityofzion/neon-js";
@@ -12,6 +12,7 @@ import {useWalletConnect} from "../context/WalletConnectContext";
 import {N3Helper} from "../helpers/N3Helper";
 import WithdrawModal from "../components/modals/WithdrawModal";
 import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
+import {format, formatDuration, intervalToDuration} from 'date-fns';
 
 interface Stream {
     deposit: number,
@@ -30,6 +31,7 @@ export default function StreamDetails() {
     const [loading, setLoading] = useState(true)
     const [withdrawOpen, setWithdrawOpen] = useState(false)
     const [stream, setStream] = useState<Stream | undefined>(undefined)
+    const [time, setTime] = useState<string|undefined>(undefined)
 
     const n3Helper = new N3Helper(DEFAULT_NEO_RPC_ADDRESS, DEFAULT_NEO_NETWORK_MAGIC)
 
@@ -58,19 +60,35 @@ export default function StreamDetails() {
         loadStream()
     }, [])
 
+    useEffect(() => {
+        updateCountDown()
+    }, [])
+
     const withdrawnValue = () => {
+        if (stream?.deposit && stream?.remaining) {
+            return stream.deposit - stream.remaining
+        }
         return 0 // TODO: deposit - remaining
     }
 
     const withdrawnPct = () => {
+        if (stream?.deposit) {
+            return (withdrawnValue()/stream.deposit) * 100
+        }
         return 0 // TODO: (withdrawValue/deposit) * 100
     }
 
     const startFormatted = () => {
+        if (stream?.start) {
+            return format(stream.start, 'yyyy/MM/dd HH:mm:ss')
+        }
         return '' // TODO: start formatted with date-fns
     }
 
-    const endAsMoment = () => {
+    const endFormatted = () => {
+        if (stream?.stop) {
+            return format(stream.stop, 'yyyy/MM/dd HH:mm:ss')
+        }
         return '' // TODO: end formatted with date-fns
     }
 
@@ -83,11 +101,33 @@ export default function StreamDetails() {
     }
 
     const countDownMiliseconds = () => {
+        if (stream?.stop) {
+            const now = new Date().getMilliseconds()
+            return stream?.stop - now
+        }
         return 0 // TODO: end - currentTimeInMilis
     }
 
     const countDownFormatted = () => {
-        return '' // TODO: format the countdown with date-fns
+        const readableTime = intervalToDuration({start: new Date(), end: countDownMiliseconds()})
+        return formatDuration(readableTime)// TODO: format the countdown with date-fns
+    }
+
+    const updateCountDown = async () => {
+        if (stream?.stop) {
+            const now = new Date()
+            const timeMili = stream?.stop - now.getMilliseconds()
+            const readableTime = intervalToDuration({start: new Date(), end: timeMili})
+            await setTime(formatDuration(readableTime))
+            await sleep(1000)
+            await updateCountDown()
+        }
+    }
+
+    const sleep = (time: number) => {
+        return new Promise(resolve => {
+            setTimeout(resolve, time)
+        })
     }
 
     const share = () => {
@@ -144,10 +184,54 @@ export default function StreamDetails() {
     return (<>
         {loading ? <><Spacer/><Spinner /><Spacer/></> : (<>
             <Spacer/>
-            <Text color="#004e87" fontSize={["1.4rem", "2rem"]} textAlign="center" m="0.5rem">
-                {id}
-            </Text>
+            <Flex direction="column" width="60rem" fontWeight="bold" fontSize="0.875rem" color="#004e87">
+                <Flex marginBottom="0.5rem">
+                    <Flex direction="column">
+                        <Text fontSize="1.5rem">{withdrawnValue()}</Text>
+                        <Text>Gas Withdrawn</Text>
+                    </Flex>
+                    <Spacer/>
+                    <Flex direction="column"  textAlign="center">
+                        <Text fontSize="1.5rem">{streamedValue()}</Text>
+                        <Text>Gas Streamed</Text>
+                    </Flex>
+                    <Spacer/>
+                    <Flex direction="column" textAlign="right">
+                        <Text fontSize="1.5rem">{stream?.deposit ?? "-"}</Text>
+                        <Text>Gas Total</Text>
+                    </Flex>
+                </Flex>
+                <Box bg="white" width="60rem" height="3rem" borderRadius="6.25rem" overflow="hidden">
+                    <Box bg="#0094ff" width="60%" height="3rem" borderRadius="6.25rem">
+                        <Box bg="#004e87" width={"30%"} height="3rem" borderRadius="6.25rem"/>
+                    </Box>
+                </Box>
+                <Flex marginTop="0.5rem">
+                    <Text>Started at {startFormatted()}</Text>
+                    <Spacer/>
+                    <Text>Ends at {endFormatted()}</Text>
+                </Flex>
+            </Flex>
             <Spacer/>
+            <Text color="#004e87" fontSize="2rem" fontWeight="bold" textAlign="center">{time}</Text>
+            <Spacer/>
+            <Link color="white" borderRadius="0.5rem" backgroundColor="#0094ff" m="0.5rem" p={["0.5rem 1rem", "0.8rem 12rem"]}
+                  textAlign="center"
+                  _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
+                <Text fontSize="2rem" m={0}>Withdraw</Text>
+            </Link>
+            <Flex>
+                <Link color="#0094ff" borderRadius="0.5rem" backgroundColor="white" m="0.5rem" p={["0.5rem 1rem", "0.8rem 5rem"]}
+                      textAlign="center"
+                      _hover={{textDecoration: 'none', backgroundColor: 'gray.100'}}>
+                    <Text fontSize="2rem" m={0}>Share</Text>
+                </Link>
+                <Link color="white" borderRadius="0.5rem" backgroundColor="#004e87" m="0.5rem" p={["0.5rem 1rem", "0.8rem 2rem"]}
+                      textAlign="center"
+                      _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
+                    <Text fontSize="2rem" m={0}>Cancel Stream</Text>
+                </Link>
+            </Flex>
             <Spacer/>
             <Button onClick={() => setWithdrawOpen(true)}>Withdraw</Button>
             <WithdrawModal isOpen={withdrawOpen} onClose={withdraw} />

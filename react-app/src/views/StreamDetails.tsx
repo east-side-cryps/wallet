@@ -1,5 +1,5 @@
 import {Button, Link, Spacer, Spinner, Text, useToast, Flex, Box} from "@chakra-ui/react";
-import {useParams} from "react-router-dom";
+import {useHistory, useParams} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import Neon, {rpc, sc, wallet} from "@cityofzion/neon-js";
 import {
@@ -13,6 +13,7 @@ import {N3Helper} from "../helpers/N3Helper";
 import WithdrawModal from "../components/modals/WithdrawModal";
 import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
 import {format, formatDuration, intervalToDuration} from 'date-fns';
+import Swal, {SweetAlertOptions} from 'sweetalert2'
 
 interface Stream {
     deposit: number,
@@ -28,6 +29,7 @@ export default function StreamDetails() {
     const walletConnectCtx = useWalletConnect()
     let {id} = useParams<{ id: string }>();
     const toast = useToast()
+    const history = useHistory()
     const [loading, setLoading] = useState(true)
     const [withdrawOpen, setWithdrawOpen] = useState(false)
     const [stream, setStream] = useState<Stream | undefined>(undefined)
@@ -51,8 +53,18 @@ export default function StreamDetails() {
             resp = {error: {message: e.message, ...e}}
         }
 
-        const retrievedStream = JSON.parse(atob(resp.stack?.[0].value as string))
-        setStream(retrievedStream)
+        try {
+            const retrievedStream = JSON.parse(atob(resp.stack?.[0].value as string))
+            setStream(retrievedStream)
+        } catch (e) {
+            toast({
+                title: "Stream not found",
+                status: "error",
+                duration: 10000,
+                isClosable: true,
+            })
+            history.push("/")
+        }
         setLoading(false)
     }
 
@@ -136,8 +148,12 @@ export default function StreamDetails() {
         })
     }
 
-    const share = () => {
-        // TODO: use share-api-polyfill
+    const share = async () => {
+        await navigator.share({
+            title: 'CryptSydra',
+            text: 'Streaming Payments for NEO N3',
+            url: window.location.href
+        })
     }
 
     const withdraw = async (amountToWithdraw: number) => {
@@ -164,11 +180,7 @@ export default function StreamDetails() {
 
         setLoading(true)
         const notification = (await n3Helper.getNotificationsFromTxId(resp.result))
-            .find(n => {
-                console.log(n.contract, DEFAULT_GAS_SCRIPTHASH, n.contract === DEFAULT_GAS_SCRIPTHASH)
-                console.log(n.eventname, 'Transfer', n.eventname === 'Transfer')
-                return n.contract === DEFAULT_GAS_SCRIPTHASH && n.eventname === 'Transfer'
-            })
+            .find(n => n.contract === DEFAULT_GAS_SCRIPTHASH && n.eventname === 'Transfer')
         if (!notification) return
         const notificationValues = notification.state.value as ContractParamJson[]
         if (!notificationValues || notificationValues.length < 3) return
@@ -185,6 +197,61 @@ export default function StreamDetails() {
 
         await loadStream()
         setLoading(false)
+    }
+
+    const dialog = (options: SweetAlertOptions) => {
+        return new Promise((resolve, reject) => {
+            Swal.fire(options).then((result) => {
+                if (result.isConfirmed) {
+                    resolve(result)
+                } else {
+                    reject(result)
+                }
+            })
+        })
+    }
+
+    const cancelStream = async () => {
+        if (!walletConnectCtx) return
+
+        await dialog({
+            title: 'Are you sure?',
+            text: 'The Gas that was not Streamed will return to Sender\'s Account',
+            showCancelButton: true,
+        })
+
+        const streamId = {type: 'Integer', value: Number(id)}
+
+        const resp = await walletConnectCtx.rpcRequest({
+            method: 'invokefunction',
+            params: [DEFAULT_SC_SCRIPTHASH, 'cancelStream', [streamId]],
+        })
+
+        if (resp.result.error && resp.result.error.message) {
+            toast({
+                title: resp.result.error.message,
+                status: "error",
+                duration: 10000,
+                isClosable: true,
+            })
+            return
+        }
+
+        setLoading(true)
+        const notification = (await n3Helper.getNotificationsFromTxId(resp.result))
+            .find(n => n.contract === DEFAULT_SC_SCRIPTHASH && n.eventname === 'StreamCanceled')
+        if (!notification) return
+
+        toast({
+            title: "Success!",
+            description: `Stream cancelled`,
+            status: "success",
+            duration: 4000,
+            isClosable: true,
+        })
+
+        setLoading(false)
+        history.push("/")
     }
 
     return (<>
@@ -209,10 +276,11 @@ export default function StreamDetails() {
                 </Flex>
                 <Flex bg="white" w="60rem" h="3rem" borderRadius="6.25rem" overflow="hidden">
                     <Flex bg="#0094ff" w={streamedPctFormatted()} h="3rem" borderRadius="6.25rem">
-                        <Text bg="#004e87" w={withdrawnPctFormatted()} h="3rem" lineHeight="3rem" borderRadius="6.25rem" textAlign="right" color="white" pr="0.8rem">
+                        <Text bg="#004e87" w={withdrawnPctFormatted()} h="3rem" lineHeight="3rem" borderRadius="6.25rem"
+                              textAlign="right" color="white" pr="0.8rem">
                             {withdrawnPct() > 0 && withdrawnPctFormatted()}
                         </Text>
-                        <Spacer />
+                        <Spacer/>
                         {streamedPct() > 0 && <Text pr="0.8rem" alignSelf="center">{streamedPctFormatted()}</Text>}
                     </Flex>
                 </Flex>
@@ -232,12 +300,14 @@ export default function StreamDetails() {
                 <Text fontSize="2rem" m={0}>Withdraw</Text>
             </Link>
             <Flex>
-                <Link color="#0094ff" borderRadius="0.5rem" bg="white" m="0.5rem" p={["0.5rem 1rem", "0.8rem 5rem"]}
+                <Link onClick={share} color="#0094ff" borderRadius="0.5rem" bg="white" m="0.5rem"
+                      p={["0.5rem 1rem", "0.8rem 5rem"]}
                       textAlign="center"
                       _hover={{textDecoration: 'none', backgroundColor: 'gray.100'}}>
                     <Text fontSize="2rem" m={0}>Share</Text>
                 </Link>
-                <Link color="white" borderRadius="0.5rem" bg="#004e87" m="0.5rem" p={["0.5rem 1rem", "0.8rem 2rem"]}
+                <Link onClick={cancelStream} color="white" borderRadius="0.5rem" bg="#004e87" m="0.5rem"
+                      p={["0.5rem 1rem", "0.8rem 2rem"]}
                       textAlign="center"
                       _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
                     <Text fontSize="2rem" m={0}>Cancel Stream</Text>

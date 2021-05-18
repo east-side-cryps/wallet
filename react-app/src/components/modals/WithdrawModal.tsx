@@ -59,7 +59,7 @@ export default function WithdrawModal(props: {isOpen: boolean, onClose: (value: 
                                 </NumberInputStepper>
                             </NumberInput>
                         </FormControl>
-                        <Button type="submit" w="100%" maxWidth="35rem" backgroundColor="#0094ff" textColor="white" fontSize="2rem" h="4rem"
+                        <Button type="submit" w="100%" maxWidth="35rem" bg="#0094ff" textColor="white" fontSize="2rem" h="4rem"
                                 _hover={{backgroundColor: '#0081dc'}}>
                             Withdraw
                         </Button>

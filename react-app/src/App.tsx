@@ -24,7 +24,7 @@ export default function App() {
                 <Router>
                     <Flex direction="column" w="100vw" minH="100vh">
                         <Header />
-                        <Flex direction="column" flex={1} backgroundColor="#edf7ff" align="center"
+                        <Flex direction="column" flex={1} bg="#edf7ff" align="center"
                               backgroundImage="url(/sea.svg)" backgroundPosition="bottom" backgroundRepeat="repeat-x">
 
                             <Switch>
@@ -42,7 +42,7 @@ export default function App() {
                                 </Route>
                             </Switch>
 
-                            <Flex align="center" backgroundColor="#004e87" p={["1rem", "2rem 3.25rem"]} w="100%">
+                            <Flex align="center" bg="#004e87" p={["1rem", "2rem 3.25rem"]} w="100%">
                                 <Text color="white">
                                     Gas Stream was created
                                     by <Link color="#0094ff">@hal0x2823</Link>, <Link

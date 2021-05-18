@@ -26,12 +26,12 @@ interface Stream {
 
 export default function StreamDetails() {
     const walletConnectCtx = useWalletConnect()
-    let {id} = useParams<{id: string}>();
+    let {id} = useParams<{ id: string }>();
     const toast = useToast()
     const [loading, setLoading] = useState(true)
     const [withdrawOpen, setWithdrawOpen] = useState(false)
     const [stream, setStream] = useState<Stream | undefined>(undefined)
-    const [time, setTime] = useState<string|undefined>(undefined)
+    const [countdown, setCountdown] = useState<string | undefined>(undefined)
 
     const n3Helper = new N3Helper(DEFAULT_NEO_RPC_ADDRESS, DEFAULT_NEO_NETWORK_MAGIC)
 
@@ -48,7 +48,7 @@ export default function StreamDetails() {
         try {
             resp = await contract.testInvoke('getStream', [sc.ContractParam.integer(Number(id))])
         } catch (e) {
-            resp = { error: {message: e.message, ...e} }
+            resp = {error: {message: e.message, ...e}}
         }
 
         const retrievedStream = JSON.parse(atob(resp.stack?.[0].value as string))
@@ -62,65 +62,71 @@ export default function StreamDetails() {
 
     useEffect(() => {
         updateCountDown()
-    }, [])
+    }, [stream, countdown])
 
     const withdrawnValue = () => {
-        if (stream?.deposit && stream?.remaining) {
+        if (stream) {
             return stream.deposit - stream.remaining
         }
-        return 0 // TODO: deposit - remaining
+        return 0
     }
 
     const withdrawnPct = () => {
-        if (stream?.deposit) {
-            return (withdrawnValue()/stream.deposit) * 100
+        if (stream) {
+            return withdrawnValue() / stream.deposit
         }
-        return 0 // TODO: (withdrawValue/deposit) * 100
+        return 0
+    }
+
+    const withdrawnPctFormatted = () => {
+        return (withdrawnPct() * 100).toFixed(1) + '%'
     }
 
     const startFormatted = () => {
-        if (stream?.start) {
+        if (stream) {
             return format(stream.start, 'yyyy/MM/dd HH:mm:ss')
         }
-        return '' // TODO: start formatted with date-fns
+        return ''
     }
 
     const endFormatted = () => {
-        if (stream?.stop) {
+        if (stream) {
             return format(stream.stop, 'yyyy/MM/dd HH:mm:ss')
         }
-        return '' // TODO: end formatted with date-fns
-    }
-
-    const streamedValue = () => {
-        return 0 // TODO: make a Cross-multiplication (regra de 3) using `start`, `end` and current datetime
+        return ''
     }
 
     const streamedPct = () => {
-        return 0 // TODO: (streamedValue/deposit) * 100
-    }
-
-    const countDownMiliseconds = () => {
-        if (stream?.stop) {
-            const now = new Date().getMilliseconds()
-            return stream?.stop - now
+        if (stream) {
+            const passedTime = new Date().getTime() - stream.start
+            const totalTime = stream.stop - stream.start
+            return Math.max(0, (Math.min(1, passedTime / totalTime)))
         }
-        return 0 // TODO: end - currentTimeInMilis
+        return 0
     }
 
-    const countDownFormatted = () => {
-        const readableTime = intervalToDuration({start: new Date(), end: countDownMiliseconds()})
-        return formatDuration(readableTime)// TODO: format the countdown with date-fns
+    const streamedPctFormatted = () => {
+        return (streamedPct() * 100).toFixed(1) + '%'
+    }
+
+    const streamedValue = () => {
+        if (stream) {
+            return Math.floor(streamedPct() * stream.deposit)
+        }
+        return 0
     }
 
     const updateCountDown = async () => {
         if (stream?.stop) {
-            const now = new Date()
-            const timeMili = stream?.stop - now.getMilliseconds()
-            const readableTime = intervalToDuration({start: new Date(), end: timeMili})
-            await setTime(formatDuration(readableTime))
             await sleep(1000)
-            await updateCountDown()
+            setCountdown(
+                formatDuration(
+                    intervalToDuration({
+                        start: new Date().getTime(),
+                        end: stream.stop
+                    })
+                )
+            )
         }
     }
 
@@ -182,16 +188,16 @@ export default function StreamDetails() {
     }
 
     return (<>
-        {loading ? <><Spacer/><Spinner /><Spacer/></> : (<>
+        {loading ? <><Spacer/><Spinner/><Spacer/></> : (<>
             <Spacer/>
-            <Flex direction="column" width="60rem" fontWeight="bold" fontSize="0.875rem" color="#004e87">
-                <Flex marginBottom="0.5rem">
+            <Flex direction="column" w="60rem" fontWeight="bold" fontSize="0.875rem" color="#004e87">
+                <Flex mb="0.5rem">
                     <Flex direction="column">
                         <Text fontSize="1.5rem">{withdrawnValue()}</Text>
                         <Text>Gas Withdrawn</Text>
                     </Flex>
                     <Spacer/>
-                    <Flex direction="column"  textAlign="center">
+                    <Flex direction="column" textAlign="center">
                         <Text fontSize="1.5rem">{streamedValue()}</Text>
                         <Text>Gas Streamed</Text>
                     </Flex>
@@ -201,40 +207,44 @@ export default function StreamDetails() {
                         <Text>Gas Total</Text>
                     </Flex>
                 </Flex>
-                <Box bg="white" width="60rem" height="3rem" borderRadius="6.25rem" overflow="hidden">
-                    <Box bg="#0094ff" width="60%" height="3rem" borderRadius="6.25rem">
-                        <Box bg="#004e87" width={"30%"} height="3rem" borderRadius="6.25rem"/>
-                    </Box>
-                </Box>
-                <Flex marginTop="0.5rem">
+                <Flex bg="white" w="60rem" h="3rem" borderRadius="6.25rem" overflow="hidden">
+                    <Flex bg="#0094ff" w={streamedPctFormatted()} h="3rem" borderRadius="6.25rem">
+                        <Text bg="#004e87" w={withdrawnPctFormatted()} h="3rem" lineHeight="3rem" borderRadius="6.25rem" textAlign="right" color="white" pr="0.8rem">
+                            {withdrawnPct() > 0 && withdrawnPctFormatted()}
+                        </Text>
+                        <Spacer />
+                        {streamedPct() > 0 && <Text pr="0.8rem" alignSelf="center">{streamedPctFormatted()}</Text>}
+                    </Flex>
+                </Flex>
+                <Flex mt="0.5rem">
                     <Text>Started at {startFormatted()}</Text>
                     <Spacer/>
                     <Text>Ends at {endFormatted()}</Text>
                 </Flex>
             </Flex>
             <Spacer/>
-            <Text color="#004e87" fontSize="2rem" fontWeight="bold" textAlign="center">{time}</Text>
+            <Text color="#004e87" fontSize="2rem" fontWeight="bold" textAlign="center">{countdown}</Text>
             <Spacer/>
-            <Link color="white" borderRadius="0.5rem" backgroundColor="#0094ff" m="0.5rem" p={["0.5rem 1rem", "0.8rem 12rem"]}
+            <Link onClick={() => setWithdrawOpen(true)} color="white" borderRadius="0.5rem" bg="#0094ff" m="0.5rem"
+                  p={["0.5rem 1rem", "0.8rem 12rem"]}
                   textAlign="center"
                   _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
                 <Text fontSize="2rem" m={0}>Withdraw</Text>
             </Link>
             <Flex>
-                <Link color="#0094ff" borderRadius="0.5rem" backgroundColor="white" m="0.5rem" p={["0.5rem 1rem", "0.8rem 5rem"]}
+                <Link color="#0094ff" borderRadius="0.5rem" bg="white" m="0.5rem" p={["0.5rem 1rem", "0.8rem 5rem"]}
                       textAlign="center"
                       _hover={{textDecoration: 'none', backgroundColor: 'gray.100'}}>
                     <Text fontSize="2rem" m={0}>Share</Text>
                 </Link>
-                <Link color="white" borderRadius="0.5rem" backgroundColor="#004e87" m="0.5rem" p={["0.5rem 1rem", "0.8rem 2rem"]}
+                <Link color="white" borderRadius="0.5rem" bg="#004e87" m="0.5rem" p={["0.5rem 1rem", "0.8rem 2rem"]}
                       textAlign="center"
                       _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
                     <Text fontSize="2rem" m={0}>Cancel Stream</Text>
                 </Link>
             </Flex>
             <Spacer/>
-            <Button onClick={() => setWithdrawOpen(true)}>Withdraw</Button>
-            <WithdrawModal isOpen={withdrawOpen} onClose={withdraw} />
+            <WithdrawModal isOpen={withdrawOpen} onClose={withdraw}/>
         </>)}
     </>)
 }

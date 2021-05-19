@@ -157,10 +157,19 @@ export const WalletConnectContextProvider: React.FC = ({ children }) => {
             topic: session.topic,
             reason: getError(ERROR.USER_DISCONNECTED),
         })
+        await resetApp()
     }
 
     const resetApp = async () => {
-        // TODO: reset
+        setWcClient(undefined)
+        setSession(undefined)
+        setLoadingSession(true)
+        setPairings([])
+        setIsPairing(false)
+        setIsPendingApproval(false)
+        setUri("")
+        setAccounts([])
+        await initWcClient()
     }
 
     const onSessionConnected = (session: SessionTypes.Settled) => {

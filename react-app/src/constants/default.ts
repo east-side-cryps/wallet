@@ -1,11 +1,11 @@
 export const DEFAULT_RELAY_PROVIDER = "wss://relay.walletconnect.org";
 
-export const DEFAULT_METHODS = ["getversion", "getnep17balances", "invokefunction"];
+export const DEFAULT_METHODS = ["invokefunction"];
 
 export const DEFAULT_LOGGER = "debug";
 
 export const DEFAULT_APP_METADATA = {
-  name: "CrypSydra",
+  name: "Crypsydra",
   description: "WalletConnect integration Prototype",
   url: "https://crypsydra.vercel.app/",
   icons: ["https://raw.githubusercontent.com/CityOfZion/visual-identity/develop/_CoZ%20Branding/_Logo/_Logo%20icon/_PNG%20200x178px/CoZ_Icon_DARKBLUE_200x178px.png"],

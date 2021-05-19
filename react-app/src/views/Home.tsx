@@ -7,7 +7,7 @@ export default function Home() {
         <Spacer/>
         <Text maxW="44rem" color="#004e87" fontSize={["1.4rem", "2rem"]} textAlign="center"
               fontWeight="bold" m="0.5rem">
-            If you want to securely pay someone a little bit at a time, CrypSydra is for you
+            If you want to securely pay someone a little bit at a time, Crypsydra is for you
         </Text>
         <Spacer/>
         <Box borderRadius="8px" bg="#0094ff" m="0.5rem"

@@ -1,6 +1,6 @@
 export const DEFAULT_RELAY_PROVIDER = "wss://relay.walletconnect.org";
 
-export const DEFAULT_METHODS = ["getversion", "getnep17balances", "invokefunction"];
+export const DEFAULT_METHODS = ["invokefunction"];
 
 export const DEFAULT_LOGGER = "debug";
 

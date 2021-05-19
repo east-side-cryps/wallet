@@ -1,12 +1,17 @@
 import * as React from "react";
 import WaveIcon from "./icons/WaveIcon";
-import {Flex, Link, Spacer, Spinner, Text, useToast} from "@chakra-ui/react";
+import {Flex, Image, Link, Spacer, Spinner, Text, useToast} from "@chakra-ui/react";
 import {useWalletConnect} from "../context/WalletConnectContext";
-import Blockchain from "./Blockchain";
 import {matchPath, useLocation, Link as RLink} from "react-router-dom";
 import CopyIcon from "./icons/CopyIcon";
 import copy from "clipboard-copy";
 import {useEffect, useState} from "react";
+import LogoutIcon from "./icons/LogoutIcon";
+
+const chainMeta = {
+    name: 'Neo3',
+    logo: 'https://cryptologos.cc/logos/neo-neo-logo.svg',
+}
 
 export default function Header() {
     const walletConnectCtx = useWalletConnect()
@@ -30,13 +35,17 @@ export default function Header() {
         })
     }
 
+    const ellipseAddress = (address = "", width = 10) => {
+        return `${address.slice(0, width)}...${address.slice(-width)}`;
+    }
+
     return (
         <Flex align="center" borderBottom="4px" borderColor="#0094FF" py="1rem" px={["1rem", "3rem"]}>
             <RLink to="/">
                 <Flex align="center">
                     <WaveIcon boxSize={["2rem", "2.5rem"]} mr={["0.3rem", "1rem"]} color="#004e87"/>
                     <Text display={['none', 'block']} color="#004e87" fontSize="2.2rem" fontWeight="bold">
-                        CrypSydra.com
+                        Crypsydra
                     </Text>
                 </Flex>
             </RLink>
@@ -54,14 +63,23 @@ export default function Header() {
                           onClick={walletConnectCtx?.onConnect}>Connect your Wallet</Link>
                 ) : (
                     <Flex direction="column" align="right">
-                        <Text fontSize="0.5rem">{walletConnectCtx.session.peer.metadata.name}</Text>
                         {walletConnectCtx.accounts.map(account => {
                             const [address] = account.split("@");
                             return (
-                                <Blockchain
-                                    key={account}
-                                    address={address}
-                                />
+                                <Flex
+                                    key={address}
+                                    align="center"
+                                >
+                                    <Image src={chainMeta.logo} alt={chainMeta.name} title={chainMeta.name} w="1.6rem"
+                                           mr="0.5rem"/>
+                                    <Flex direction="column">
+                                        <Text fontSize="0.5rem">{walletConnectCtx.session?.peer.metadata.name}</Text>
+                                        <Text fontSize="0.8rem">{ellipseAddress(address, 4)}</Text>
+                                    </Flex>
+                                    <Link ml="0.6rem" onClick={walletConnectCtx?.disconnect}>
+                                        <LogoutIcon boxSize="1.4rem" color="#004e87"/>
+                                    </Link>
+                                </Flex>
                             );
                         })}
                     </Flex>

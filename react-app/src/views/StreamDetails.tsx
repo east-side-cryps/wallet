@@ -1,4 +1,4 @@
-import {Link, Spacer, Spinner, Text, useToast, Flex} from "@chakra-ui/react";
+import {Link, Spacer, Spinner, Text, useToast, Flex, Box} from "@chakra-ui/react";
 import {useHistory, useParams} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import Neon, {sc, wallet} from "@cityofzion/neon-js";
@@ -276,16 +276,16 @@ export default function StreamDetails() {
                         <Text>Gas Total</Text>
                     </Flex>
                 </Flex>
-                <Flex bg="white" h="3rem" borderRadius="6.25rem" overflow="hidden">
-                    <Flex bg="#0094ff" w={streamedPctFormatted()} h="3rem" borderRadius="6.25rem">
-                        <Text bg="#004e87" w={withdrawnPctFormatted()} h="3rem" lineHeight="3rem" borderRadius="6.25rem"
-                              textAlign="right" color="white" pr="0.8rem">
-                            {withdrawnPct() > 0 && withdrawnPctFormatted()}
-                        </Text>
-                        <Spacer/>
-                        {streamedPct() > 0 && <Text pr="0.8rem" alignSelf="center">{streamedPctFormatted()}</Text>}
-                    </Flex>
-                </Flex>
+                <Box bg="white" h="3rem" borderRadius="6.25rem" overflow="hidden">
+                    <Text bg="#0094ff" w={streamedPctFormatted()} h="3rem" lineHeight="3rem" borderRadius="6.25rem"
+                          textAlign="right" pr="0.8rem">
+                        {streamedPct() > 0 && streamedPctFormatted()}
+                    </Text>
+                    <Text bg="#004e87" w={withdrawnPctFormatted()} h="3rem" lineHeight="3rem" borderRadius="6.25rem"
+                          textAlign="right" pr="0.8rem" color="white" mt="-3rem">
+                        {withdrawnPct() > 0 && withdrawnPctFormatted()}
+                    </Text>
+                </Box>
                 <Flex mt="0.5rem">
                     <Text>Started at {startFormatted()}</Text>
                     <Spacer/>

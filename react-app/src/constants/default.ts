@@ -17,7 +17,7 @@ export const DEFAULT_GAS_SCRIPTHASH = "0xd2a4cff31913016155e38e474a2c06d08be276c
 
 export const DEFAULT_NEO_RPC_ADDRESS = "https://testnet1.neo.coz.io:443";
 export const DEFAULT_NEO_NETWORK_MAGIC = 844378958;
-export const DEFAULT_SC_SCRIPTHASH = "0x89768714998d076003e84b60c150b6e97bbafa3c";
+export const DEFAULT_SC_SCRIPTHASH = "0x9a7fc4ddf5e5cd6843b2e00aaf9560a5f5a789ff";
 
 // export const DEFAULT_NEO_RPC_ADDRESS = "http://localhost:50012";
 // export const DEFAULT_NEO_NETWORK_MAGIC = 1911028336;

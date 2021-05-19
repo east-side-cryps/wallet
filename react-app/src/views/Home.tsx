@@ -12,10 +12,10 @@ export default function Home() {
         <Spacer/>
         <Box borderRadius="8px" bg="#0094ff" m="0.5rem"
              _hover={{textDecoration: 'none', backgroundColor: '#0081dc'}}>
-            <Link to="/createStream" color="white">
+            <Link to="/createStream">
                 <Flex align="center" p={["0.5rem 1rem", "1rem 2rem"]}>
-                    <RadioIcon boxSize="2.5rem" mr="1rem"/>
-                    <Text fontSize="2rem">Create a Stream</Text>
+                    <RadioIcon color="white" boxSize="2.5rem" mr="1rem"/>
+                    <Text color="white" fontSize="2rem">Create a Stream</Text>
                 </Flex>
             </Link>
         </Box>

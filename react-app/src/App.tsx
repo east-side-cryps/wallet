@@ -23,7 +23,7 @@ export default function App() {
             <WalletConnectContextProvider>
                 <Router>
                     <Flex direction="column" w="100vw" minH="100vh">
-                        <Header />
+                        <Header/>
                         <Flex direction="column" flex={1} bg="#edf7ff" align="center"
                               backgroundImage="url(/sea.svg)" backgroundPosition="bottom" backgroundRepeat="repeat-x">
 
@@ -45,11 +45,17 @@ export default function App() {
                             <Flex align="center" bg="#004e87" p={["1rem", "2rem 3.25rem"]} w="100%">
                                 <Text color="white">
                                     Gas Stream was created
-                                    by <Link color="#0094ff">@hal0x2823</Link>, <Link
-                                    color="#0094ff">@melanke</Link> and <Link color="#0094ff">@yumiuehara</Link>
+                                    by <Link href="https://github.com/hal0x2328" terget="_blank" color="#0094ff">
+                                    @hal0x2328
+                                </Link>, <Link href="https://github.com/melanke" terget="_blank"
+                                               color="#0094ff">
+                                    @melanke
+                                </Link> and <Link href="https://github.com/yumiuehara" terget="_blank" color="#0094ff">
+                                    @yumiuehara
+                                </Link>
                                 </Text>
                                 <Spacer/>
-                                <Link color="white">
+                                <Link href="https://github.com/east-side-cryps" target="_blank" color="white">
                                     <Flex align="center">
                                         <GHIcon boxSize="1.5rem" mr="0.5rem"/>
                                         <Text fontSize="1.125rem">Fork it on Github</Text>
@@ -58,8 +64,8 @@ export default function App() {
                             </Flex>
                         </Flex>
                     </Flex>
-                    <PairingModal />
-                    <RequestModal />
+                    <PairingModal/>
+                    <RequestModal/>
                 </Router>
             </WalletConnectContextProvider>
         </ChakraProvider>

@@ -14,6 +14,7 @@ import WithdrawModal from "../components/modals/WithdrawModal";
 import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
 import {format, formatDuration, intervalToDuration} from 'date-fns';
 import Swal, {SweetAlertOptions} from 'sweetalert2'
+import SpinnerWithMessage from "../components/SpinnerWithMessage";
 
 interface Stream {
     deposit: number,
@@ -30,7 +31,7 @@ export default function StreamDetails() {
     let {id} = useParams<{ id: string }>();
     const toast = useToast()
     const history = useHistory()
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState<string | null>('Retrieving Stream')
     const [withdrawOpen, setWithdrawOpen] = useState(false)
     const [stream, setStream] = useState<Stream | undefined>(undefined)
     const [countdown, setCountdown] = useState<string | undefined>(undefined)
@@ -65,7 +66,7 @@ export default function StreamDetails() {
             })
             history.push("/")
         }
-        setLoading(false)
+        setLoading(null)
     }
 
     useEffect(() => {
@@ -180,7 +181,7 @@ export default function StreamDetails() {
             return
         }
 
-        setLoading(true)
+        setLoading('Validating Result')
         const notification = (await n3Helper.getNotificationsFromTxId(resp.result))
             .find(n => n.contract === DEFAULT_GAS_SCRIPTHASH && n.eventname === 'Transfer')
         if (!notification) return
@@ -198,7 +199,7 @@ export default function StreamDetails() {
         })
 
         await loadStream()
-        setLoading(false)
+        setLoading(null)
     }
 
     const dialog = (options: SweetAlertOptions) => {
@@ -239,7 +240,7 @@ export default function StreamDetails() {
             return
         }
 
-        setLoading(true)
+        setLoading('Validating Result')
         const notification = (await n3Helper.getNotificationsFromTxId(resp.result))
             .find(n => n.contract === DEFAULT_SC_SCRIPTHASH && n.eventname === 'StreamCanceled')
         if (!notification) return
@@ -252,12 +253,12 @@ export default function StreamDetails() {
             isClosable: true,
         })
 
-        setLoading(false)
+        setLoading(null)
         history.push("/")
     }
 
     return (<>
-        {loading ? <><Spacer/><Spinner/><Spacer/></> : (<>
+        {loading ? <><Spacer/><SpinnerWithMessage message={loading} /><Spacer/></> : (<>
             <Spacer/>
             <Flex direction="column" w="100%" maxW="60rem" fontWeight="bold" fontSize="0.875rem" color="#004e87" px="0.5rem">
                 <Flex mb="0.5rem">

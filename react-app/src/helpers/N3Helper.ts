@@ -10,10 +10,15 @@ export class N3Helper {
         this.networkMagic = networkMagic
     }
 
-    getVersion = async () => {
-        const rpcClient = new rpc.RPCClient(this.rpcAddress)
-        const v = await rpcClient.getVersion()
-        console.log(v)
+    // TODO: the websocket didn't send the desired information
+    getNotificationsFromTxId2 = async (txId: string): Promise<any> => {
+        return new Promise((resolve, reject) => {
+            new WebSocket(`wss://dora.coz.io/ws/v1/neo3/testnet/log/${txId}`).onmessage = function (event) {
+                console.log(event.data);
+                // this.close()
+                // resolve(event.data)
+            }
+        })
     }
 
     getNotificationsFromTxId = async (txId: string) => {

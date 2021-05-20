@@ -11,7 +11,7 @@ import {
     NumberInputStepper,
     NumberIncrementStepper,
     NumberDecrementStepper,
-    FormLabel, Button, Spinner, useToast
+    FormLabel, Button, useToast
 } from "@chakra-ui/react";
 import {useWalletConnect} from "../context/WalletConnectContext";
 import {
@@ -70,7 +70,7 @@ export default function CreateStream() {
         if (!txId) return
         setLoading('Validating Result')
         const notification = (await n3Helper.getNotificationsFromTxId(txId))
-            .find(n => n.contract === DEFAULT_SC_SCRIPTHASH && n.eventname === 'StreamCreated')
+            .find((n: any) => n.contract === DEFAULT_SC_SCRIPTHASH && n.eventname === 'StreamCreated')
         if (!notification) return
         const hexstring = ((notification.state.value as ContractParamJson[])[0].value as string)
         const json = atob(hexstring)
@@ -121,7 +121,7 @@ export default function CreateStream() {
 
     return (
         <Flex as="form" onSubmit={handleSubmit} direction="column" align="center" flex="1" w="100%" px="0.5rem">
-            {loading ? <><Spacer/><SpinnerWithMessage message={loading} /><Spacer/></> : (<>
+            {loading ? <><Spacer/><SpinnerWithMessage xl={true} message={loading} /><Spacer/></> : (<>
             <Text color="#004e87" fontWeight="bold" fontSize="2rem" m="2rem">Stream Registration</Text>
             <FormControl style={formControlStyle} isRequired>
                 <FormLabel style={formLabelStyle}>Recipient Address</FormLabel>

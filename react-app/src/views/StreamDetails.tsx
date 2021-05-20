@@ -1,4 +1,4 @@
-import {Link, Spacer, Spinner, Text, useToast, Flex, Box} from "@chakra-ui/react";
+import {Link, Spacer, Text, useToast, Flex, Box} from "@chakra-ui/react";
 import {useHistory, useParams} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import Neon, {sc, wallet} from "@cityofzion/neon-js";
@@ -15,16 +15,7 @@ import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
 import {format, formatDuration, intervalToDuration} from 'date-fns';
 import Swal, {SweetAlertOptions} from 'sweetalert2'
 import SpinnerWithMessage from "../components/SpinnerWithMessage";
-
-interface Stream {
-    deposit: number,
-    id: number,
-    recipient: string,
-    remaining: number,
-    sender: string,
-    start: number,
-    stop: number,
-}
+import {Stream} from "../types/Stream";
 
 export default function StreamDetails() {
     const walletConnectCtx = useWalletConnect()
@@ -258,7 +249,7 @@ export default function StreamDetails() {
     }
 
     return (<>
-        {loading ? <><Spacer/><SpinnerWithMessage message={loading} /><Spacer/></> : (<>
+        {loading ? <><Spacer/><SpinnerWithMessage xl={true} message={loading} /><Spacer/></> : (<>
             <Spacer/>
             <Flex direction="column" w="100%" maxW="60rem" fontWeight="bold" fontSize="0.875rem" color="#004e87" px="0.5rem">
                 <Flex mb="0.5rem">

@@ -1,4 +1,4 @@
-import {Link, Spacer, Spinner, Text} from "@chakra-ui/react";
+import {Link, Spacer, Text} from "@chakra-ui/react";
 import WalletIcon from "../components/icons/WalletIcon";
 import {useWalletConnect} from "../context/WalletConnectContext";
 import React, {useEffect} from "react";
@@ -19,7 +19,7 @@ export default function ConnectToProceed() {
     }, [walletConnectCtx?.loadingSession, walletConnectCtx?.session])
 
     return (<>
-        {walletConnectCtx?.loadingSession ? <><Spacer/><SpinnerWithMessage message="Loading WalletConnect Session" /><Spacer/></> : (<>
+        {walletConnectCtx?.loadingSession ? <><Spacer/><SpinnerWithMessage xl={true} message="Loading WalletConnect Session" /><Spacer/></> : (<>
             <Spacer/>
             <Text color="#004e87" fontSize={["1.4rem", "2rem"]} textAlign="center" m="0.5rem">
                 You need to connect to your wallet before proceeding

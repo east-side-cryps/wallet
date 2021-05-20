@@ -30,7 +30,7 @@ export default function RequestModal() {
               <ModalBody>
                   <Flex direction="column" align="center">
                     <Loader />
-                    <Text fontWeight="bold">Approve or reject request using your wallet</Text>
+                    <Text fontWeight="bold" my="2rem">Approve or reject request using your wallet</Text>
                   </Flex>
               </ModalBody>
           </ModalContent>

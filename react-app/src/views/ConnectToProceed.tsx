@@ -3,6 +3,7 @@ import WalletIcon from "../components/icons/WalletIcon";
 import {useWalletConnect} from "../context/WalletConnectContext";
 import React, {useEffect} from "react";
 import {useHistory} from "react-router-dom";
+import SpinnerWithMessage from "../components/SpinnerWithMessage";
 
 export default function ConnectToProceed() {
     const walletConnectCtx = useWalletConnect()
@@ -18,7 +19,7 @@ export default function ConnectToProceed() {
     }, [walletConnectCtx?.loadingSession, walletConnectCtx?.session])
 
     return (<>
-        {walletConnectCtx?.loadingSession ? <><Spacer/><Spinner /><Spacer/></> : (<>
+        {walletConnectCtx?.loadingSession ? <><Spacer/><SpinnerWithMessage message="Loading WalletConnect Session" /><Spacer/></> : (<>
             <Spacer/>
             <Text color="#004e87" fontSize={["1.4rem", "2rem"]} textAlign="center" m="0.5rem">
                 You need to connect to your wallet before proceeding

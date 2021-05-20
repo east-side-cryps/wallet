@@ -22,6 +22,7 @@ import {
 } from "../constants";
 import {ContractParamJson} from "@cityofzion/neon-core/lib/sc";
 import {N3Helper} from "../helpers/N3Helper";
+import SpinnerWithMessage from "../components/SpinnerWithMessage";
 
 const formControlStyle = {
     maxWidth: "35rem", marginBottom: "2rem"
@@ -48,14 +49,14 @@ export default function CreateStream() {
     const [totalAmountOfGas, setTotalAmountOfGas] = useState(0)
     const [startDatetime, setStartDatetime] = useState('')
     const [endDatetime, setEndDatetime] = useState('')
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState<string | null>('Checking WalletConnect Session')
 
     useEffect(() => {
         if (!walletConnectCtx?.loadingSession) {
             if (!walletConnectCtx?.session) {
                 history.push('/connectToProceed')
             } else {
-                setLoading(false)
+                setLoading(null)
             }
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,7 +68,7 @@ export default function CreateStream() {
 
         const txId = await createStream()
         if (!txId) return
-        setLoading(true)
+        setLoading('Validating Result')
         const notification = (await n3Helper.getNotificationsFromTxId(txId))
             .find(n => n.contract === DEFAULT_SC_SCRIPTHASH && n.eventname === 'StreamCreated')
         if (!notification) return
@@ -75,7 +76,7 @@ export default function CreateStream() {
         const json = atob(hexstring)
         const data = JSON.parse(json)
         if (!data) return
-        setLoading(false)
+        setLoading(null)
         history.push(`/stream/${data.id}`)
     }
 
@@ -120,7 +121,7 @@ export default function CreateStream() {
 
     return (
         <Flex as="form" onSubmit={handleSubmit} direction="column" align="center" flex="1" w="100%" px="0.5rem">
-            {loading ? <><Spacer/><Spinner /><Spacer/></> : (<>
+            {loading ? <><Spacer/><SpinnerWithMessage message={loading} /><Spacer/></> : (<>
             <Text color="#004e87" fontWeight="bold" fontSize="2rem" m="2rem">Stream Registration</Text>
             <FormControl style={formControlStyle} isRequired>
                 <FormLabel style={formLabelStyle}>Recipient Address</FormLabel>

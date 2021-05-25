@@ -7,7 +7,7 @@ import Input from "../components/Input";
 import Button from "../components/Button";
 import Column from "../components/Column";
 import Blockchain from "../components/Blockchain";
-import Method from "../components/Method";
+import PulsingMethod from "../components/PulsingMethod";
 
 const SSection = styled.div`
   width: 100%;
@@ -120,12 +120,12 @@ const DefaultCard = (props: DefaultCardProps) => {
                 <h6>{"Requests"}</h6>
                 {requests.map(requestEvent =>
                   isJsonRpcRequest(requestEvent.request) ? (
-                    <Method
+                    <PulsingMethod
                       key={`default:request:${requestEvent.request.id}`}
                       onClick={() => openRequest(requestEvent)}
                     >
                       <div>{requestEvent.request.method}</div>
-                    </Method>
+                    </PulsingMethod>
                   ) : null,
                 )}
               </React.Fragment>

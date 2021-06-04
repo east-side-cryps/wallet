@@ -1,6 +1,6 @@
 import * as encUtils from "enc-utils";
 
-import { Cards } from "./types";
+import { Step } from "./types";
 
 export function capitalize(string: string): string {
   return string
@@ -95,18 +95,14 @@ export function convertHexToNumber(hex: string) {
   }
 }
 
-export function isProposalCard(card: Cards.All): card is Cards.Proposal {
+export function isProposalCard(card: Step.All): card is Step.Proposal {
   return card.type === "proposal";
 }
 
-export function isSessionCard(card: Cards.All): card is Cards.Session {
+export function isSessionCard(card: Step.All): card is Step.Session {
   return card.type === "session";
 }
 
-export function isRequestCard(card: Cards.All): card is Cards.Request {
+export function isRequestCard(card: Step.All): card is Step.Request {
   return card.type === "request";
-}
-
-export function isSettingsCard(card: Cards.All): card is Cards.Settings {
-  return card.type === "settings";
 }

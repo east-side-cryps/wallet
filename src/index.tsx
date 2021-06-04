@@ -1,18 +1,20 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { createGlobalStyle } from "styled-components";
+import {ChakraProvider} from "@chakra-ui/react"
+import {WalletConnectContextProvider} from "./context/WalletConnectContext";
 
 import App from "./App";
-import { globalStyle } from "./styles";
-
-const GlobalStyle = createGlobalStyle`
-  ${globalStyle}
-`;
+import {AccountContextProvider} from "./context/AccountContext";
 
 ReactDOM.render(
-  <>
-    <GlobalStyle />
-    <App />
-  </>,
-  document.getElementById("root"),
+    <>
+        <ChakraProvider>
+            <WalletConnectContextProvider>
+                <AccountContextProvider>
+                    <App/>
+                </AccountContextProvider>
+            </WalletConnectContextProvider>
+        </ChakraProvider>
+    </>,
+    document.getElementById("root"),
 );
